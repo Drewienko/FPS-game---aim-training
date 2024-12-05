@@ -14,20 +14,17 @@ int Engine::lastMouseX = -1;
 int Engine::lastMouseY = -1;
 
 Engine::Engine(int argc, char** argv, int width, int height, const char* title) {
-    // Inicjalizacja FreeGLUT
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
     glutInitWindowSize(width, height);
     glutCreateWindow(title);
 
-    // Ustawienia początkowe
     initSettings();
 
-    // Funkcje zwrotne
     glutDisplayFunc(displayCallback);
     glutKeyboardFunc(keyboardCallback);
     glutReshapeFunc(reshapeCallback);
-    glutMotionFunc(mouseMotionCallback); // Dodanie funkcji obsługującej ruch myszy
+    glutMotionFunc(mouseMotionCallback); //uruchamia sie tylko jesli jeden z przyciskow jest wcisniety
     glutTimerFunc(1000 / 60, timerCallback, 0); // 60 FPS
 }
 
@@ -36,16 +33,16 @@ void Engine::mouseMotionCallback(int x, int y) {
         int deltaX = x - lastMouseX;
         int deltaY = y - lastMouseY;
 
-        cameraAngleX += deltaX * 0.1f; // Regulacja czułości
+        cameraAngleX += deltaX * 0.1f;
         cameraAngleY += deltaY * 0.1f;
-        if (cameraAngleY > 89.0f) cameraAngleY = 89.0f;
+        if (cameraAngleY > 89.0f) cameraAngleY = 89.0f; //blokada obrotu
         if (cameraAngleY < -89.0f) cameraAngleY = -89.0f;
     }
 
     lastMouseX = x;
     lastMouseY = y;
 
-    glutPostRedisplay(); // Wymuszenie odświeżenia ekranu
+    glutPostRedisplay(); 
 }
 
 void Engine::start() {
@@ -75,7 +72,6 @@ void Engine::displayCallback() {
     glRotatef(cameraAngleX, 0.0f, 1.0f, 0.0f);
     gluLookAt(0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
-    // Rysowanie obiektów
     PrimitiveRenderer::setColor(1.0f, 0.0f, 0.0f);
     PrimitiveRenderer::drawSphere(1.0f, 20, 20);
 
@@ -99,7 +95,7 @@ void Engine::displayCallback() {
 }
 
 void Engine::keyboardCallback(unsigned char key, int x, int y) {
-    if (key == 27) { // ESC - wyjście
+    if (key == 27) { // ESC
         exit(0);
     }
     else if (key == 'p') {

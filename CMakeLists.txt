@@ -9,7 +9,7 @@ if (POLICY CMP0141)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 endif()
 
-project ("test123")
+project ("Engine-3D")
 
 set(SOURCE_FILES
     main
@@ -30,7 +30,7 @@ endforeach()
 add_executable(${PROJECT_NAME} ${FULL_SOURCE_FILES})
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET test123 PROPERTY CXX_STANDARD 20)
+  set_property(TARGET Engine-3D PROPERTY CXX_STANDARD 20)
 endif()
 
 INCLUDE_DIRECTORIES(
