@@ -13,10 +13,16 @@ private:
     static int windowWidth;
     static int windowHeight;
 
+    static float cameraAngleX;
+    static float cameraAngleY;
+    static int lastMouseX;
+    static int lastMouseY;
+
     void initSettings();
     static void displayCallback();
     static void keyboardCallback(unsigned char key, int x, int y);
     static void reshapeCallback(int w, int h);
+    static void mouseMotionCallback(int x, int y);
     static void timerCallback(int value);
     static void updateProjectionMatrix();
 };

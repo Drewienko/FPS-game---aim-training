@@ -8,6 +8,11 @@ bool Engine::isPerspective = true;
 int Engine::windowWidth = 800;
 int Engine::windowHeight = 600;
 
+float Engine::cameraAngleX = 0.0f;
+float Engine::cameraAngleY = 0.0f;
+int Engine::lastMouseX = -1;
+int Engine::lastMouseY = -1;
+
 Engine::Engine(int argc, char** argv, int width, int height, const char* title) {
     // Inicjalizacja FreeGLUT
     glutInit(&argc, argv);
@@ -15,12 +20,32 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
     glutInitWindowSize(width, height);
     glutCreateWindow(title);
 
+    // Ustawienia początkowe
     initSettings();
 
+    // Funkcje zwrotne
     glutDisplayFunc(displayCallback);
     glutKeyboardFunc(keyboardCallback);
     glutReshapeFunc(reshapeCallback);
+    glutMotionFunc(mouseMotionCallback); // Dodanie funkcji obsługującej ruch myszy
     glutTimerFunc(1000 / 60, timerCallback, 0); // 60 FPS
+}
+
+void Engine::mouseMotionCallback(int x, int y) {
+    if (lastMouseX >= 0 && lastMouseY >= 0) {
+        int deltaX = x - lastMouseX;
+        int deltaY = y - lastMouseY;
+
+        cameraAngleX += deltaX * 0.1f; // Regulacja czułości
+        cameraAngleY += deltaY * 0.1f;
+        if (cameraAngleY > 89.0f) cameraAngleY = 89.0f;
+        if (cameraAngleY < -89.0f) cameraAngleY = -89.0f;
+    }
+
+    lastMouseX = x;
+    lastMouseY = y;
+
+    glutPostRedisplay(); // Wymuszenie odświeżenia ekranu
 }
 
 void Engine::start() {
@@ -46,26 +71,38 @@ void Engine::displayCallback() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
+    glRotatef(cameraAngleY, 1.0f, 0.0f, 0.0f);
+    glRotatef(cameraAngleX, 0.0f, 1.0f, 0.0f);
     gluLookAt(0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
-    PrimitiveRenderer::setColor(1.0f, 0.0f, 0.0f); 
+    // Rysowanie obiektów
+    PrimitiveRenderer::setColor(1.0f, 0.0f, 0.0f);
     PrimitiveRenderer::drawSphere(1.0f, 20, 20);
 
     PrimitiveRenderer::setColor(0.0f, 1.0f, 0.0f);
     glTranslatef(3.0f, 0.0f, 0.0f);
     PrimitiveRenderer::drawCube(1.5f);
 
+    PrimitiveRenderer::setColor(0.0f, 1.0f, 0.0f);
+    glTranslatef(3.0f, 0.0f, 0.0f);
+    PrimitiveRenderer::drawTorus(1.5f,1.0f,3,3);
+
+    PrimitiveRenderer::setColor(0.0f, 1.0f, 1.0f);
+    glTranslatef(-9.0f, 0.0f, 0.0f);
+    PrimitiveRenderer::drawCone(2.0f,1.0f,3,5);
+
     PrimitiveRenderer::setColor(0.0f, 0.0f, 1.0f);
-    glTranslatef(-6.0f, 0.0f, 0.0f);
+    glTranslatef(-3.0f, 0.0f, 0.0f);
     PrimitiveRenderer::drawTeapot(1.0f);
 
     glutSwapBuffers();
 }
 
 void Engine::keyboardCallback(unsigned char key, int x, int y) {
-    if (key == 27) {
+    if (key == 27) { // ESC - wyjście
         exit(0);
-    } else if (key == 'p') {
+    }
+    else if (key == 'p') {
         changeProjection(!isPerspective);
     }
 }
@@ -88,7 +125,8 @@ void Engine::updateProjectionMatrix() {
 
     if (isPerspective) {
         gluPerspective(60.0, static_cast<double>(windowWidth) / windowHeight, 1.0, 100.0);
-    } else {
+    }
+    else {
         glOrtho(-2.0, 2.0, -2.0, 2.0, 1.0, 100.0);
     }
 
