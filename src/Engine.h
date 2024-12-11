@@ -13,6 +13,9 @@ private:
     static int windowWidth;
     static int windowHeight;
 
+    static float cameraX;
+    static float cameraY;
+    static float cameraZ;
     static float cameraAngleX;
     static float cameraAngleY;
     static int lastMouseX;

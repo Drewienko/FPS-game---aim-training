@@ -8,6 +8,9 @@ bool Engine::isPerspective = true;
 int Engine::windowWidth = 800;
 int Engine::windowHeight = 600;
 
+float Engine::cameraX = 0.0f;
+float Engine::cameraY = 0.0f;
+float Engine::cameraZ = 10.0f;
 float Engine::cameraAngleX = 0.0f;
 float Engine::cameraAngleY = 0.0f;
 int Engine::lastMouseX = -1;
@@ -24,7 +27,7 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
     glutDisplayFunc(displayCallback);
     glutKeyboardFunc(keyboardCallback);
     glutReshapeFunc(reshapeCallback);
-    glutMotionFunc(mouseMotionCallback); //uruchamia sie tylko jesli jeden z przyciskow jest wcisniety
+    glutMotionFunc(mouseMotionCallback); // uruchamia sie tylko jesli jeden z przyciskow jest wcisniety
     glutTimerFunc(1000 / 60, timerCallback, 0); // 60 FPS
 }
 
@@ -35,14 +38,41 @@ void Engine::mouseMotionCallback(int x, int y) {
 
         cameraAngleX += deltaX * 0.1f;
         cameraAngleY += deltaY * 0.1f;
-        if (cameraAngleY > 89.0f) cameraAngleY = 89.0f; //blokada obrotu
+        if (cameraAngleY > 89.0f) cameraAngleY = 89.0f; // blokada obrotu
         if (cameraAngleY < -89.0f) cameraAngleY = -89.0f;
     }
 
     lastMouseX = x;
     lastMouseY = y;
 
-    glutPostRedisplay(); 
+    glutPostRedisplay();
+}
+
+void Engine::keyboardCallback(unsigned char key, int x, int y) {
+    float speed = 0.5f;
+    if (key == 'w') {
+        cameraZ -= speed;
+    }
+    else if (key == 's') {
+        cameraZ += speed;
+    }
+    else if (key == 'a') {
+        cameraX -= speed;
+    }
+    else if (key == 'd') {
+        cameraX += speed;
+    }
+    else if (key == 'q') {
+        cameraY += speed;
+    }
+    else if (key == 'e') {
+        cameraY -= speed;
+    }
+    else if (key == 27) { // ESC
+        exit(0);
+    }
+
+    glutPostRedisplay();
 }
 
 void Engine::start() {
@@ -68,39 +98,78 @@ void Engine::displayCallback() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
+    glTranslatef(-cameraX, -cameraY, -cameraZ);
     glRotatef(cameraAngleY, 1.0f, 0.0f, 0.0f);
     glRotatef(cameraAngleX, 0.0f, 1.0f, 0.0f);
-    gluLookAt(0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
-    PrimitiveRenderer::setColor(1.0f, 0.0f, 0.0f);
-    PrimitiveRenderer::drawSphere(1.0f, 20, 20);
+    // Example 1: Drawing points
+    float pointVertices[] = {
+        -3.0f, 3.0f, 0.0f,
+        -2.0f, 3.0f, 0.0f
+    };
+    float pointColors[] = {
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f
+    };
+    PrimitiveRenderer::drawPoints(pointVertices, pointColors, 2);
 
-    PrimitiveRenderer::setColor(0.0f, 1.0f, 0.0f);
-    glTranslatef(3.0f, 0.0f, 0.0f);
-    PrimitiveRenderer::drawCube(1.5f);
+    // Example 2: Drawing lines
+    float lineVertices[] = {
+        -3.0f, 2.0f, 0.0f,
+        -1.0f, 2.0f, 0.0f
+    };
+    float lineColors[] = {
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f
+    };
+    PrimitiveRenderer::drawLines(lineVertices, lineColors, 2);
 
-    PrimitiveRenderer::setColor(0.0f, 1.0f, 0.0f);
-    glTranslatef(3.0f, 0.0f, 0.0f);
-    PrimitiveRenderer::drawTorus(1.5f,1.0f,3,3);
+    // Example 3: Drawing triangles
+    float triangleVertices[] = {
+        -3.0f, 1.0f, 0.0f,
+        -2.0f, 1.5f, 0.0f,
+        -1.0f, 1.0f, 0.0f
+    };
+    float triangleColors[] = {
+        1.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, 0.0f
+    };
+    PrimitiveRenderer::drawTriangles(triangleVertices, triangleColors, 3);
 
-    PrimitiveRenderer::setColor(0.0f, 1.0f, 1.0f);
-    glTranslatef(-9.0f, 0.0f, 0.0f);
-    PrimitiveRenderer::drawCone(2.0f,1.0f,3,5);
+    // Example 4: Drawing triangle fan
+    float fanVertices[] = {
+        0.0f, 0.0f, 0.0f,
+        0.5f, 1.0f, 0.0f,
+        1.0f, 0.5f, 0.0f,
+        1.0f, -0.5f, 0.0f,
+        0.5f, -1.0f, 0.0f
+    };
+    float fanColors[] = {
+        1.0f, 0.0f, 1.0f,
+        1.0f, 0.0f, 1.0f,
+        1.0f, 0.0f, 1.0f,
+        1.0f, 0.0f, 1.0f,
+        1.0f, 0.0f, 1.0f
+    };
+    PrimitiveRenderer::drawTriangles(fanVertices, fanColors, 5);
 
-    PrimitiveRenderer::setColor(0.0f, 0.0f, 1.0f);
-    glTranslatef(-3.0f, 0.0f, 0.0f);
-    PrimitiveRenderer::drawTeapot(1.0f);
+    // Example 5: Drawing quads
+    float quadVertices[] = {
+        2.0f, 1.0f, 0.0f,
+        3.0f, 1.0f, 0.0f,
+        3.0f, 0.0f, 0.0f,
+        2.0f, 0.0f, 0.0f
+    };
+    float quadColors[] = {
+        0.5f, 0.5f, 0.5f,
+        0.5f, 0.5f, 0.5f,
+        0.5f, 0.5f, 0.5f,
+        0.5f, 0.5f, 0.5f
+    };
+    PrimitiveRenderer::drawTriangles(quadVertices, quadColors, 4);
 
     glutSwapBuffers();
-}
-
-void Engine::keyboardCallback(unsigned char key, int x, int y) {
-    if (key == 27) { // ESC
-        exit(0);
-    }
-    else if (key == 'p') {
-        changeProjection(!isPerspective);
-    }
 }
 
 void Engine::reshapeCallback(int w, int h) {
@@ -123,7 +192,7 @@ void Engine::updateProjectionMatrix() {
         gluPerspective(60.0, static_cast<double>(windowWidth) / windowHeight, 1.0, 100.0);
     }
     else {
-        glOrtho(-2.0, 2.0, -2.0, 2.0, 1.0, 100.0);
+        glOrtho(-10.0, 10.0, -10.0, 10.0, 1.0, 100.0);
     }
 
     glMatrixMode(GL_MODELVIEW);
