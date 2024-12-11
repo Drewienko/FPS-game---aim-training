@@ -42,7 +42,6 @@ void PrimitiveRenderer::drawTriangles(float* vertices, float* colors, int count)
 }
 
 void PrimitiveRenderer::drawCube(float size, float x, float y, float z, float* color) {
-    // Generate cube vertices dynamically based on size and position
     float vertices[] = {
         x - size, y - size, z - size,
         x + size, y - size, z - size,
@@ -66,12 +65,12 @@ void PrimitiveRenderer::drawCube(float size, float x, float y, float z, float* c
     };
 
     unsigned int indices[] = {
-        0, 1, 2,  2, 3, 0, // Front face
-        4, 5, 6,  6, 7, 4, // Back face
-        0, 1, 5,  5, 4, 0, // Bottom face
-        2, 3, 7,  7, 6, 2, // Top face
-        0, 3, 7,  7, 4, 0, // Left face
-        1, 2, 6,  6, 5, 1  // Right face
+        0, 1, 2,  2, 3, 0, // przod
+        4, 5, 6,  6, 7, 4, // tyl
+        0, 1, 5,  5, 4, 0, // dol
+        2, 3, 7,  7, 6, 2, // gora
+        0, 3, 7,  7, 4, 0, // lwy
+        1, 2, 6,  6, 5, 1  // prawy
     };
 
     glEnableClientState(GL_VERTEX_ARRAY);

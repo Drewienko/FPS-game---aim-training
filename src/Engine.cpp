@@ -102,7 +102,7 @@ void Engine::displayCallback() {
     glRotatef(cameraAngleY, 1.0f, 0.0f, 0.0f);
     glRotatef(cameraAngleX, 0.0f, 1.0f, 0.0f);
 
-    // Example 1: Drawing points
+    // punkty
     float pointVertices[] = {
         -3.0f, 3.0f, 0.0f,
         -2.0f, 3.0f, 0.0f
@@ -113,7 +113,7 @@ void Engine::displayCallback() {
     };
     PrimitiveRenderer::drawPoints(pointVertices, pointColors, 2);
 
-    // Example 2: Drawing lines
+    // linie
     float lineVertices[] = {
         -3.0f, 2.0f, 0.0f,
         -1.0f, 2.0f, 0.0f
@@ -124,7 +124,7 @@ void Engine::displayCallback() {
     };
     PrimitiveRenderer::drawLines(lineVertices, lineColors, 2);
 
-    // Example 3: Drawing triangles
+    // trojkaty
     float triangleVertices[] = {
         -3.0f, 1.0f, 0.0f,
         -2.0f, 1.5f, 0.0f,
@@ -137,7 +137,7 @@ void Engine::displayCallback() {
     };
     PrimitiveRenderer::drawTriangles(triangleVertices, triangleColors, 3);
 
-    // Example 4: Drawing triangle fan
+    // wachlarze
     float fanVertices[] = {
         0.0f, 0.0f, 0.0f,
         0.5f, 1.0f, 0.0f,
@@ -154,7 +154,7 @@ void Engine::displayCallback() {
     };
     PrimitiveRenderer::drawTriangles(fanVertices, fanColors, 5);
 
-    // Example 5: Drawing quads
+    // czworokaty
     float quadVertices[] = {
         2.0f, 1.0f, 0.0f,
         3.0f, 1.0f, 0.0f,
