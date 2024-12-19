@@ -1,20 +1,22 @@
 #include "Engine.h"
 #include "PrimitiveRenderer.h"
+#include "Observer.h"
+#include "Cube.h"
 #include <GL/freeglut.h>
 #include <iostream>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 
 // Definicje statycznych zmiennych
 bool Engine::isPerspective = true;
 int Engine::windowWidth = 800;
 int Engine::windowHeight = 600;
-
-float Engine::cameraX = 0.0f;
-float Engine::cameraY = 0.0f;
-float Engine::cameraZ = 10.0f;
-float Engine::cameraAngleX = 0.0f;
-float Engine::cameraAngleY = 0.0f;
-int Engine::lastMouseX = -1;
-int Engine::lastMouseY = -1;
+Observer* Engine::observer = nullptr;
+static bool isMousePressed = false;
+static int lastMouseX = -1;
+static int lastMouseY = -1;
 
 Engine::Engine(int argc, char** argv, int width, int height, const char* title) {
     glutInit(&argc, argv);
@@ -24,23 +26,45 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
 
     initSettings();
 
+    observer = new Observer(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
     glutDisplayFunc(displayCallback);
     glutKeyboardFunc(keyboardCallback);
     glutReshapeFunc(reshapeCallback);
-    glutMotionFunc(mouseMotionCallback); // uruchamia sie tylko jesli jeden z przyciskow jest wcisniety
-    glutTimerFunc(1000 / 60, timerCallback, 0); // 60 FPS
+    glutMouseFunc(mouseCallback);
+    glutMotionFunc(mouseMotionCallback);
+    glutTimerFunc(1000 / 60, timerCallback, 0);
+}
+
+Engine::~Engine() {
+    delete observer;
+}
+
+void Engine::mouseCallback(int button, int state, int x, int y) {
+    if (button == GLUT_LEFT_BUTTON) {
+        if (state == GLUT_DOWN) {
+            isMousePressed = true;
+            lastMouseX = x;
+            lastMouseY = y;
+        }
+        else if (state == GLUT_UP) {
+            isMousePressed = false;
+            lastMouseX = -1;
+            lastMouseY = -1;
+        }
+    }
 }
 
 void Engine::mouseMotionCallback(int x, int y) {
-    if (lastMouseX >= 0 && lastMouseY >= 0) {
-        int deltaX = x - lastMouseX;
-        int deltaY = y - lastMouseY;
-
-        cameraAngleX += deltaX * 0.1f;
-        cameraAngleY += deltaY * 0.1f;
-        if (cameraAngleY > 89.0f) cameraAngleY = 89.0f; // blokada obrotu
-        if (cameraAngleY < -89.0f) cameraAngleY = -89.0f;
+    if (!isMousePressed || lastMouseX == -1 || lastMouseY == -1) {
+        return;
     }
+
+    int deltaX = x - lastMouseX;
+    int deltaY = y - lastMouseY;
+
+    observer->rotate(deltaX * 0.1f, glm::vec3(0.0f, 1.0f, 0.0f));
+    observer->rotate(deltaY * 0.1f, glm::vec3(1.0f, 0.0f, 0.0f));
 
     lastMouseX = x;
     lastMouseY = y;
@@ -48,25 +72,26 @@ void Engine::mouseMotionCallback(int x, int y) {
     glutPostRedisplay();
 }
 
+
 void Engine::keyboardCallback(unsigned char key, int x, int y) {
     float speed = 0.5f;
     if (key == 'w') {
-        cameraZ -= speed;
+        observer->move(glm::vec3(0.0f, 0.0f, -speed));
     }
     else if (key == 's') {
-        cameraZ += speed;
+        observer->move(glm::vec3(0.0f, 0.0f, speed));
     }
     else if (key == 'a') {
-        cameraX -= speed;
+        observer->move(glm::vec3(-speed, 0.0f, 0.0f));
     }
     else if (key == 'd') {
-        cameraX += speed;
+        observer->move(glm::vec3(speed, 0.0f, 0.0f));
     }
     else if (key == 'q') {
-        cameraY += speed;
+        observer->move(glm::vec3(0.0f, speed, 0.0f));
     }
     else if (key == 'e') {
-        cameraY -= speed;
+        observer->move(glm::vec3(0.0f, -speed, 0.0f));
     }
     else if (key == 27) { // ESC
         exit(0);
@@ -96,11 +121,7 @@ void Engine::initSettings() {
 
 void Engine::displayCallback() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glLoadIdentity();
-
-    glTranslatef(-cameraX, -cameraY, -cameraZ);
-    glRotatef(cameraAngleY, 1.0f, 0.0f, 0.0f);
-    glRotatef(cameraAngleX, 0.0f, 1.0f, 0.0f);
+    glLoadMatrixf(glm::value_ptr(observer->getViewMatrix()));
 
     // punkty
     float pointVertices[] = {
@@ -168,6 +189,11 @@ void Engine::displayCallback() {
         0.5f, 0.5f, 0.5f
     };
     PrimitiveRenderer::drawTriangles(quadVertices, quadColors, 4);
+
+    float cubeColors[] = { 0.0f, 1.0f, 0.0f };
+    Cube *cube = new Cube(1.0f, 0.0f, 3.0f, 0.0f, cubeColors);
+    cube->draw();
+
 
     glutSwapBuffers();
 }

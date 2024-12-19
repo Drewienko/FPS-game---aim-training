@@ -41,6 +41,19 @@ void PrimitiveRenderer::drawTriangles(float* vertices, float* colors, int count)
     glDisableClientState(GL_COLOR_ARRAY);
 }
 
+void PrimitiveRenderer::drawIndexedTriangles(const float* vertices, const float* colors, const unsigned int* indices, int indexCount) {
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
+
+    glVertexPointer(3, GL_FLOAT, 0, vertices);
+    glColorPointer(3, GL_FLOAT, 0, colors);
+
+    glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, indices);
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+}
+
 void PrimitiveRenderer::drawCube(float size, float x, float y, float z, float* color) {
     float vertices[] = {
         x - size, y - size, z - size,

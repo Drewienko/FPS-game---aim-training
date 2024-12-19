@@ -10,6 +10,8 @@ public:
 
     static void drawTriangles(float* vertices, float* colors, int count);
 
+    static void drawIndexedTriangles(const float* vertices, const float* colors, const unsigned int* indices, int indexCount);
+
     static void drawCube(float size, float x, float y, float z, float* color);
 };
 
