@@ -3,14 +3,16 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include "TransformableObject.h"
 
-class Observer {
+class Observer : public TransformableObject {
 public:
     Observer(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up);
 
     glm::mat4 getViewMatrix() const;
-    void move(const glm::vec3& direction);
+    void translate(const glm::vec3& direction);
     void rotate(float angle, const glm::vec3& axis);
+    void scale(float sx, float sy) {};
     void setPosition(const glm::vec3& newPosition);
     void setTarget(const glm::vec3& newTarget);
 

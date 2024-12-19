@@ -76,22 +76,22 @@ void Engine::mouseMotionCallback(int x, int y) {
 void Engine::keyboardCallback(unsigned char key, int x, int y) {
     float speed = 0.5f;
     if (key == 'w') {
-        observer->move(glm::vec3(0.0f, 0.0f, -speed));
+        observer->translate(glm::vec3(0.0f, 0.0f, -speed));
     }
     else if (key == 's') {
-        observer->move(glm::vec3(0.0f, 0.0f, speed));
+        observer->translate(glm::vec3(0.0f, 0.0f, speed));
     }
     else if (key == 'a') {
-        observer->move(glm::vec3(-speed, 0.0f, 0.0f));
+        observer->translate(glm::vec3(-speed, 0.0f, 0.0f));
     }
     else if (key == 'd') {
-        observer->move(glm::vec3(speed, 0.0f, 0.0f));
+        observer->translate(glm::vec3(speed, 0.0f, 0.0f));
     }
     else if (key == 'q') {
-        observer->move(glm::vec3(0.0f, speed, 0.0f));
+        observer->translate(glm::vec3(0.0f, speed, 0.0f));
     }
     else if (key == 'e') {
-        observer->move(glm::vec3(0.0f, -speed, 0.0f));
+        observer->translate(glm::vec3(0.0f, -speed, 0.0f));
     }
     else if (key == 27) { // ESC
         exit(0);

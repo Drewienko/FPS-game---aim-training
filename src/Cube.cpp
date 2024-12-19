@@ -1,7 +1,8 @@
 #include "Cube.h"
 #include "PrimitiveRenderer.h"
 
-Cube::Cube(float size, float x, float y, float z, const float* color) {
+Cube::Cube(float size, float x, float y, float z, const float* color) 
+{
     vertices = {
         x - size, y - size, z - size,
         x + size, y - size, z - size,

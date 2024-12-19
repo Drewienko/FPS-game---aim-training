@@ -1,0 +1,5 @@
+C:/Users/omako/Desktop/Engine-3D-master/build/CMakeFiles/Engine-3D.dir
+C:/Users/omako/Desktop/Engine-3D-master/build/CMakeFiles/copy-files.dir
+C:/Users/omako/Desktop/Engine-3D-master/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/omako/Desktop/Engine-3D-master/build/CMakeFiles/ZERO_CHECK.dir
+C:/Users/omako/Desktop/Engine-3D-master/build/_deps/glm-build/CMakeFiles/ALL_BUILD.dir

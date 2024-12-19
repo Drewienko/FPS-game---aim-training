@@ -8,7 +8,7 @@ glm::mat4 Observer::getViewMatrix() const {
     return glm::lookAt(position, target, up);
 }
 
-void Observer::move(const glm::vec3& direction) {
+void Observer::translate(const glm::vec3& direction) {
     position += direction;
     target += direction;
 }
