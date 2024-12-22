@@ -1,6 +1,4 @@
-﻿# CMakeList.txt : CMake project for test123, include source and define
-# project specific logic here.
-#
+﻿
 cmake_minimum_required (VERSION 3.11)
 
 # Enable Hot Reload for MSVC compilers if supported.
@@ -18,6 +16,15 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(glm)
+
+FetchContent_Declare(
+	freeglut
+	GIT_REPOSITORY	https://github.com/freeglut/freeglut.git
+	GIT_TAG 	566cd459201ae29003ef5686c06506d8646e55c6 #refs/tags/v3.6.0
+)
+
+FetchContent_MakeAvailable(freeglut)
+
 
 project ("Engine-3D")
 
@@ -46,23 +53,24 @@ if (CMAKE_VERSION VERSION_GREATER 3.12)
 endif()
 
 INCLUDE_DIRECTORIES(
-    ${PROJECT_NAME} "${CMAKE_CURRENT_SOURCE_DIR}/freeglut/include"
+    ${PROJECT_NAME} "${freeglut_SOURCE_DIR}/include"
 )
 
-LINK_DIRECTORIES(
-    ${PROJECT_NAME} "${CMAKE_CURRENT_SOURCE_DIR}/freeglut/lib"
+
+TARGET_LINK_LIBRARIES(
+    ${PROJECT_NAME} PRIVATE
+    freeglut
 )
 
 TARGET_LINK_LIBRARIES(
-    ${PROJECT_NAME} 
-    "${CMAKE_CURRENT_SOURCE_DIR}/freeglut/lib/freeglutd.lib"
+    ${PROJECT_NAME} PRIVATE
     glm::glm
 )
 
 add_custom_target(copy-files ALL
     COMMAND ${CMAKE_COMMAND} -E copy
-    ${CMAKE_CURRENT_SOURCE_DIR}/freeglut/bin/freeglutd.dll
-    ${CMAKE_CURRENT_BINARY_DIR}
+    ${freeglut_BINARY_DIR}/bin/freeglutd.dll
+    ${CMAKE_BINARY_DIR}
 )
 
-# TODO: Add tests and install targets if needed.
+
