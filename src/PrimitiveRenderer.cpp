@@ -1,5 +1,5 @@
 #include "PrimitiveRenderer.h"
-#include <GL/freeglut.h>
+
 
 
 void PrimitiveRenderer::drawPoints(float* vertices, float* colors, int count) {
@@ -96,4 +96,13 @@ void PrimitiveRenderer::drawCube(float size, float x, float y, float z, float* c
 
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_COLOR_ARRAY);
+}
+
+void PrimitiveRenderer::configureMaterial(const glm::vec4& ambient, const glm::vec4& diffuse, const glm::vec4& specular, float shininess) {
+    glMaterialfv(GL_FRONT, GL_AMBIENT, glm::value_ptr(ambient));
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, glm::value_ptr(diffuse));
+    glMaterialfv(GL_FRONT, GL_SPECULAR, glm::value_ptr(specular));
+    glMaterialf(GL_FRONT, GL_SHININESS, shininess);
+    glColorMaterial(GL_FRONT, GL_AMBIENT);
+
 }

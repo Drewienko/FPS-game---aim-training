@@ -1,7 +1,14 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
+#include "PrimitiveRenderer.h"
 #include "Observer.h"
+#include "Cube.h"
+#include <GL/freeglut.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <iostream>
 
 class Engine {
 public:
@@ -10,7 +17,6 @@ public:
 
     void start();
     static void setClearColor(float r, float g, float b, float a = 1.0f);
-    static void changeProjection(bool perspective);
 
 private:
     static bool isPerspective;
@@ -19,6 +25,7 @@ private:
     static Observer* observer;
 
     void initSettings();
+    void initLighting();
     static void displayCallback();
     static void keyboardCallback(unsigned char key, int x, int y);
     static void reshapeCallback(int w, int h);
