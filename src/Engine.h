@@ -1,14 +1,17 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
-#include "PrimitiveRenderer.h"
-#include "Observer.h"
-#include "Cube.h"
+#include <iostream>
 #include <GL/freeglut.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <iostream>
+
+#include "PrimitiveRenderer.h"
+#include "Observer.h"
+#include "Cube.h"
+#include "BitMapHandler.h"
 
 class Engine {
 public:

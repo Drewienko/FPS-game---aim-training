@@ -1,5 +1,6 @@
 #include "Engine.h"
-
+#include "BitmapHandler.h"
+#include "Cube.h"
 
 // Definicje statycznych zmiennych
 bool Engine::isPerspective = true;
@@ -11,8 +12,11 @@ static int lastMouseX = -1;
 static int lastMouseY = -1;
 static GLenum shadingMode = GL_SMOOTH;
 
-
 Observer* observer = nullptr;
+
+Cube* texturedCube = nullptr;
+std::vector<Cube*> cubes;
+float rotationAngle = 0.0f;
 
 Engine::Engine(int argc, char** argv, int width, int height, const char* title) {
     glutInit(&argc, argv);
@@ -24,6 +28,23 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
 
     observer = new Observer(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
+    // Initialize textured cubes
+    const float cubeColor[] = { 0.5f, 0.5f, 0.5f };
+    GLuint woodTexture = BitmapHandler::loadBitmapFromFile("textures/wood.jpg");
+
+    for (int i = -2; i <= 2; ++i) {
+        for (int j = -2; j <= 2; ++j) {
+            Cube* cube = new Cube(0.8f, i * 2.0f, j * 2.0f, 0.0f, cubeColor);
+            cube->setTextureForSide(0, woodTexture); // Front
+            cube->setTextureForSide(1, woodTexture); // Back
+            cube->setTextureForSide(2, woodTexture); // Left
+            cube->setTextureForSide(3, woodTexture); // Right
+            cube->setTextureForSide(4, woodTexture); // Top
+            cube->setTextureForSide(5, woodTexture); // Bottom
+            cubes.push_back(cube);
+        }
+    }
+
     glutDisplayFunc(displayCallback);
     glutKeyboardFunc(keyboardCallback);
     glutReshapeFunc(reshapeCallback);
@@ -34,6 +55,9 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
 
 Engine::~Engine() {
     delete observer;
+    for (Cube* cube : cubes) {
+        delete cube;
+    }
 }
 
 void Engine::initSettings() {
@@ -57,88 +81,29 @@ void Engine::initLighting() {
     glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
     glLightfv(GL_LIGHT0, GL_SPECULAR, specularLight);
     glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
-    glEnable(GL_COLOR_MATERIAL);
 
+    // Additional light source
+    glEnable(GL_LIGHT1);
+    GLfloat light1Position[] = { -10.0f, -10.0f, 10.0f, 1.0f };
+    GLfloat light1Diffuse[] = { 0.5f, 0.5f, 0.5f, 1.0f };
+    glLightfv(GL_LIGHT1, GL_POSITION, light1Position);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, light1Diffuse);
+
+    glEnable(GL_COLOR_MATERIAL);
 }
 
 void Engine::displayCallback() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadMatrixf(glm::value_ptr(observer->getViewMatrix()));
 
+    glPushMatrix();
+    glRotatef(rotationAngle, 0.0f, 1.0f, 0.0f); // Apply rotation to all cubes
 
-    float pointVertices[] = {
-        -3.0f, 3.0f, 0.0f,
-        -2.0f, 3.0f, 0.0f
-    };
-    float pointColors[] = {
-        1.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f
-    };
-    PrimitiveRenderer::drawPoints(pointVertices, pointColors, 2);
+    for (Cube* cube : cubes) {
+        cube->draw();
+    }
 
-    float lineVertices[] = {
-        -3.0f, 2.0f, 0.0f,
-        -1.0f, 2.0f, 0.0f
-    };
-    float lineColors[] = {
-        0.0f, 0.0f, 1.0f,
-        0.0f, 0.0f, 1.0f
-    };
-    PrimitiveRenderer::drawLines(lineVertices, lineColors, 2);
-
-    float triangleVertices[] = {
-        -3.0f, 1.0f, 0.0f,
-        -2.0f, 1.5f, 0.0f,
-        -1.0f, 1.0f, 0.0f
-    };
-    float triangleColors[] = {
-        1.0f, 1.0f, 0.0f,
-        1.0f, 1.0f, 0.0f,
-        1.0f, 1.0f, 0.0f
-    };
-    PrimitiveRenderer::drawTriangles(triangleVertices, triangleColors, 3);
-
-    float quadVertices[] = {
-        2.0f, 1.0f, 0.0f,
-        3.0f, 1.0f, 0.0f,
-        3.0f, 0.0f, 0.0f,
-        2.0f, 0.0f, 0.0f
-    };
-    float quadColors[] = {
-        0.5f, 0.5f, 0.5f,
-        0.5f, 0.5f, 0.5f,
-        0.5f, 0.5f, 0.5f,
-        0.5f, 0.5f, 0.5f
-    };
-    PrimitiveRenderer::drawTriangles(quadVertices, quadColors, 4);
-
-
-    glm::vec4 ambient(0.1f, 0.1f, 0.1f, 1.0f);
-    glm::vec4 diffuse(0.5f, 0.5f, 0.5f, 1.0f);
-    glm::vec4 specular(1.0f, 1.0f, 1.0f, 1.0f);
-    float shininess = 50.0f;
-
-    PrimitiveRenderer::configureMaterial(ambient, diffuse, specular, shininess);
-
-    float cubeSize = 1.0f;
-
-
-    float cubeColor1[] = { 0.0f, 1.0f, 0.0f };
-    Cube cube1(cubeSize, -2.0f, 0.0f, 0.0f, cubeColor1);
-    cube1.draw();
-
-    float cubeColor2[] = { 0.0f, 0.0f, 1.0f };
-    Cube cube2(cubeSize, 2.0f, 0.0f, 0.0f, cubeColor2);
-    cube2.draw();
-
-    float cubeColor3[] = { 1.0f, 0.0f, 0.0f };
-    Cube cube3(cubeSize, 0.0f, 2.0f, 0.0f, cubeColor3);
-    cube3.draw();
-
-
-    float cubeColor4[] = { 1.0f, 1.0f, 0.0f };
-    Cube cube4(cubeSize, 0.0f, -2.0f, 0.0f, cubeColor4);
-    cube4.draw();
+    glPopMatrix();
 
     glutSwapBuffers();
 }
@@ -218,6 +183,11 @@ void Engine::reshapeCallback(int w, int h) {
 }
 
 void Engine::timerCallback(int value) {
+    rotationAngle += 1.0f; // Increment rotation angle
+    if (rotationAngle >= 360.0f) {
+        rotationAngle -= 360.0f;
+    }
+
     glutPostRedisplay();
     glutTimerFunc(1000 / 60, timerCallback, value); // 60 FPS
 }

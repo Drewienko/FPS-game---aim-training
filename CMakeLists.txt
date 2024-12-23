@@ -25,6 +25,13 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(freeglut)
 
+FetchContent_Declare(
+	stb
+	GIT_REPOSITORY	https://github.com/nothings/stb.git
+)
+
+FetchContent_MakeAvailable(stb)
+
 
 project ("Engine-3D")
 
@@ -34,6 +41,7 @@ set(SOURCE_FILES
     PrimitiveRenderer
     Cube
     Observer
+    BitMapHandler
 )
 
 
@@ -54,6 +62,7 @@ endif()
 
 INCLUDE_DIRECTORIES(
     ${PROJECT_NAME} "${freeglut_SOURCE_DIR}/include"
+    ${PROJECT_NAME} "${stb_SOURCE_DIR}"
 )
 
 
@@ -71,6 +80,13 @@ add_custom_target(copy-files ALL
     COMMAND ${CMAKE_COMMAND} -E copy
     ${freeglut_BINARY_DIR}/bin/freeglutd.dll
     ${CMAKE_BINARY_DIR}
+)
+
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/textures
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>/textures
 )
 
 
