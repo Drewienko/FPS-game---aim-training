@@ -42,6 +42,7 @@ set(SOURCE_FILES
     Cube
     Observer
     BitMapHandler
+    Wall
 )
 
 

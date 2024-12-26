@@ -1,6 +1,7 @@
 #include "Engine.h"
 #include "BitmapHandler.h"
 #include "Cube.h"
+#include "Wall.h"
 
 // Definicje statycznych zmiennych
 bool Engine::isPerspective = true;
@@ -17,6 +18,9 @@ Observer* observer = nullptr;
 Cube* texturedCube = nullptr;
 std::vector<Cube*> cubes;
 float rotationAngle = 0.0f;
+Wall* testWall = nullptr;
+
+GLfloat light1Position[] = { -10.0f, 10.0f, 10.0f, 1.0f };
 
 Engine::Engine(int argc, char** argv, int width, int height, const char* title) {
     glutInit(&argc, argv);
@@ -45,6 +49,9 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
         }
     }
 
+    GLuint wallTexture = BitmapHandler::loadBitmapFromFile("textures/wall.jpg");
+    testWall = new Wall(-5.0f, -5.0f, -5.0f, 15.0f, 15.0f, wallTexture);
+
     glutDisplayFunc(displayCallback);
     glutKeyboardFunc(keyboardCallback);
     glutReshapeFunc(reshapeCallback);
@@ -58,6 +65,7 @@ Engine::~Engine() {
     for (Cube* cube : cubes) {
         delete cube;
     }
+    delete testWall;
 }
 
 void Engine::initSettings() {
@@ -72,22 +80,23 @@ void Engine::initLighting() {
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
 
-    GLfloat ambientLight[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+    GLfloat ambientLight[] = { 0.05f, 0.05f, 0.05f, 1.0f };
     GLfloat diffuseLight[] = { 0.8f, 0.8f, 0.8f, 1.0f };
     GLfloat specularLight[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    GLfloat lightPosition[] = { 10.0f, 10.0f, 10.0f, 1.0f };
+    GLfloat lightPosition[] = { 0.0f, 10.0f, 0.0f, 1.0f };
 
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
     glLightfv(GL_LIGHT0, GL_SPECULAR, specularLight);
     glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
 
-    // Additional light source
+ 
     glEnable(GL_LIGHT1);
-    GLfloat light1Position[] = { -10.0f, -10.0f, 10.0f, 1.0f };
     GLfloat light1Diffuse[] = { 0.5f, 0.5f, 0.5f, 1.0f };
+    GLfloat light1Specular[] = { 0.6f, 0.6f, 0.6f, 1.0f };
     glLightfv(GL_LIGHT1, GL_POSITION, light1Position);
     glLightfv(GL_LIGHT1, GL_DIFFUSE, light1Diffuse);
+    glLightfv(GL_LIGHT1, GL_SPECULAR, light1Specular);
 
     glEnable(GL_COLOR_MATERIAL);
 }
@@ -96,13 +105,38 @@ void Engine::displayCallback() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadMatrixf(glm::value_ptr(observer->getViewMatrix()));
 
-    glPushMatrix();
-    glRotatef(rotationAngle, 0.0f, 1.0f, 0.0f); // Apply rotation to all cubes
+   
+    GLfloat lightPosition[] = { 5.0f, 10.0f, 5.0f, 1.0f };
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
 
+  
+    GLfloat floorAmbient[] = { 0.1f, 0.1f, 0.1f, 1.0f };
+    GLfloat floorDiffuse[] = { 0.6f, 0.6f, 0.6f, 1.0f };
+    GLfloat floorSpecular[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+    GLfloat floorShininess = 10.0f;
+
+    glMaterialfv(GL_FRONT, GL_AMBIENT, floorAmbient);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, floorDiffuse);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, floorSpecular);
+    glMaterialf(GL_FRONT, GL_SHININESS, floorShininess);
+
+    glBegin(GL_QUADS);
+    glNormal3f(0.0f, 1.0f, 0.0f); 
+    glVertex3f(-10.0f, -5.0f, -10.0f);
+    glVertex3f(10.0f, -5.0f, -10.0f);
+    glVertex3f(10.0f, -5.0f, 10.0f);
+    glVertex3f(-10.0f, -5.0f, 10.0f);
+    glEnd();
+
+  
+    testWall->draw();
+
+    
+    glPushMatrix();
+    glRotatef(rotationAngle, 0.0f, 1.0f, 0.0f);
     for (Cube* cube : cubes) {
         cube->draw();
     }
-
     glPopMatrix();
 
     glutSwapBuffers();
@@ -127,6 +161,18 @@ void Engine::keyboardCallback(unsigned char key, int x, int y) {
     }
     else if (key == 'e') {
         observer->translate(glm::vec3(0.0f, -speed, 0.0f));
+    }
+    else if (key == 'i') {
+        light1Position[1] += 1.0f;
+    }
+    else if (key == 'k') {
+        light1Position[1] -= 1.0f;
+    }
+    else if (key == 'j') { 
+        light1Position[0] -= 1.0f;
+    }
+    else if (key == 'l') { 
+        light1Position[0] += 1.0f;
     }
     else if (key == 27) { // ESC
         exit(0);

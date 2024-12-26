@@ -30,7 +30,7 @@ Cube::Cube(float size, float x, float y, float z, const float* color)
     }
 
     for (int i = 0; i < 6; ++i) {
-        textures[i] = 0; // Initialize textures with default value
+        textures[i] = 0; 
     }
 }
 
@@ -56,8 +56,9 @@ void Cube::draw() {
         glEnd();
     }
 
-    glEnable(GL_TEXTURE_2D); // Ensure texture is re-enabled for subsequent rendering
+    glEnable(GL_TEXTURE_2D); 
 }
+
 
 void Cube::setTextureForSide(int side, GLuint textureID) {
     if (side >= 0 && side < 6) {
