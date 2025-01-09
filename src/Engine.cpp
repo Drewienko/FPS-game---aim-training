@@ -3,7 +3,7 @@
 #include "Cube.h"
 #include "Wall.h"
 
-// Definicje statycznych zmiennych
+//statyczne zmienne do zmiany
 bool Engine::isPerspective = true;
 int Engine::windowWidth = 800;
 int Engine::windowHeight = 600;
@@ -32,19 +32,19 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
 
     observer = new Observer(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    // Initialize textured cubes
+   
     const float cubeColor[] = { 0.5f, 0.5f, 0.5f };
     GLuint woodTexture = BitmapHandler::loadBitmapFromFile("textures/wood.jpg");
 
     for (int i = -2; i <= 2; ++i) {
         for (int j = -2; j <= 2; ++j) {
             Cube* cube = new Cube(0.8f, i * 2.0f, j * 2.0f, 0.0f, cubeColor);
-            cube->setTextureForSide(0, woodTexture); // Front
-            cube->setTextureForSide(1, woodTexture); // Back
-            cube->setTextureForSide(2, woodTexture); // Left
-            cube->setTextureForSide(3, woodTexture); // Right
-            cube->setTextureForSide(4, woodTexture); // Top
-            cube->setTextureForSide(5, woodTexture); // Bottom
+            cube->setTextureForSide(0, woodTexture); // przod
+            cube->setTextureForSide(1, woodTexture); // tyl
+            cube->setTextureForSide(2, woodTexture); // lewo
+            cube->setTextureForSide(3, woodTexture); // prawo
+            cube->setTextureForSide(4, woodTexture); // gora
+            cube->setTextureForSide(5, woodTexture); // dol
             cubes.push_back(cube);
         }
     }
@@ -128,7 +128,7 @@ void Engine::displayCallback() {
     glVertex3f(-10.0f, -5.0f, 10.0f);
     glEnd();
 
-  
+   testWall->rotate(1, glm::vec3(0, 0, 1.0));
     testWall->draw();
 
     
@@ -180,12 +180,12 @@ void Engine::keyboardCallback(unsigned char key, int x, int y) {
     else if (key == 'f' || key == 'F') {
         shadingMode = GL_FLAT;
         glShadeModel(shadingMode);
-        std::cout << "Switched to Flat Shading" << std::endl;
+        std::cout << "Flat Shading" << std::endl;
     }
     else if (key == 'g' || key == 'G') {
         shadingMode = GL_SMOOTH;
         glShadeModel(shadingMode);
-        std::cout << "Switched to Smooth Shading (Gouraud)" << std::endl;
+        std::cout << "Gouraud Shading" << std::endl;
     }
 
     glutPostRedisplay();
@@ -229,7 +229,7 @@ void Engine::reshapeCallback(int w, int h) {
 }
 
 void Engine::timerCallback(int value) {
-    rotationAngle += 1.0f; // Increment rotation angle
+    rotationAngle += 1.0f; 
     if (rotationAngle >= 360.0f) {
         rotationAngle -= 360.0f;
     }
