@@ -12,6 +12,7 @@ public:
     glm::mat4 getViewMatrix() const;
     void translate(const glm::vec3& direction);
     void rotate(float angle, const glm::vec3& axis);
+    void rotatePoint(float angle, const glm::vec3& axis, const glm::vec3& point) override;
     void scale(float sx, float sy) {};
     void setPosition(const glm::vec3& newPosition);
     void setTarget(const glm::vec3& newTarget);

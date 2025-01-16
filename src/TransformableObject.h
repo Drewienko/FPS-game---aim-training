@@ -31,6 +31,8 @@ public:
      */
     virtual void rotate(float angle, const glm::vec3& axis)=0;
 
+    virtual void rotatePoint(float angle, const glm::vec3& axis, const glm::vec3& point) = 0;
+
     /**
      * @brief Skaluje obiekt o podane współczynniki w osiach X i Y.
      * @param sxvirtual void scale(float sx, float sy) = 0; Współczynnik skalowania w osi X.

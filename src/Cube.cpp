@@ -65,3 +65,46 @@ void Cube::setTextureForSide(int side, GLuint textureID) {
         textures[side] = textureID;
     }
 }
+
+void Cube::translate(const glm::vec3& direction) {
+    for (size_t i = 0; i < vertices.size(); i += 3) {
+        vertices[i] += direction.x;
+        vertices[i + 1] += direction.y;
+        vertices[i + 2] += direction.z;
+    }
+}
+
+void Cube::rotate(float angle, const glm::vec3& axis) {
+    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(angle), axis);
+    for (size_t i = 0; i < vertices.size(); i += 3) {
+        glm::vec4 vertex(vertices[i], vertices[i + 1], vertices[i + 2], 1.0f);
+        vertex = rotationMatrix * vertex;
+        vertices[i] = vertex.x;
+        vertices[i + 1] = vertex.y;
+        vertices[i + 2] = vertex.z;
+    }
+}
+
+void Cube::rotatePoint(float angle, const glm::vec3& axis, const glm::vec3& point) {
+    this->translate(-point);
+
+    this->rotate(angle, axis);
+
+    this->translate(point);
+}
+
+void Cube::scale(float sx, float sy) {
+    glm::vec3 center(0.0f);
+    for (size_t i = 0; i < vertices.size(); i += 3) {
+        center.x += vertices[i];
+        center.y += vertices[i + 1];
+        center.z += vertices[i + 2];
+    }
+    center /= static_cast<float>(vertices.size() / 3);
+
+    for (size_t i = 0; i < vertices.size(); i += 3) {
+        vertices[i] = center.x + (vertices[i] - center.x) * sx;
+        vertices[i + 1] = center.y + (vertices[i + 1] - center.y) * sy;
+    }
+}
+

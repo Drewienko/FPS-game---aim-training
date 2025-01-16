@@ -12,6 +12,7 @@ public:
     void draw() override;
     void translate(const glm::vec3& direction) override;
     void rotate(float angle, const glm::vec3& axis) override;
+    void rotatePoint(float angle, const glm::vec3& axis, const glm::vec3& point) override;
     void scale(float sx, float sy) override;
 
 private:

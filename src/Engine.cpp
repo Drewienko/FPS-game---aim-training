@@ -50,7 +50,7 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
     }
 
     GLuint wallTexture = BitmapHandler::loadBitmapFromFile("textures/wall.jpg");
-    testWall = new Wall(-5.0f, -5.0f, -5.0f, 15.0f, 15.0f, wallTexture);
+    testWall = new Wall(-5.0f, -5.0f, -15.0f, 15.0f, 15.0f, wallTexture);
 
     glutDisplayFunc(displayCallback);
     glutKeyboardFunc(keyboardCallback);
@@ -92,11 +92,17 @@ void Engine::initLighting() {
 
  
     glEnable(GL_LIGHT1);
-    GLfloat light1Diffuse[] = { 0.5f, 0.5f, 0.5f, 1.0f };
-    GLfloat light1Specular[] = { 0.6f, 0.6f, 0.6f, 1.0f };
+    GLfloat light1Position[] = { 2.0f, 5.0f, 2.0f, 1.0f };
+    GLfloat light1Diffuse[] = { 1.0f, 0.8f, 0.6f, 1.0f };
+    GLfloat light1Specular[] = { 1.0f, 0.9f, 0.7f, 1.0f };
+    GLfloat spotDirection[] = { 0.0f, -1.0f, 0.0f };
+
     glLightfv(GL_LIGHT1, GL_POSITION, light1Position);
     glLightfv(GL_LIGHT1, GL_DIFFUSE, light1Diffuse);
     glLightfv(GL_LIGHT1, GL_SPECULAR, light1Specular);
+    glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 30.0f);
+    glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, spotDirection);
+    glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 10.0f);
 
     glEnable(GL_COLOR_MATERIAL);
 }
@@ -109,6 +115,16 @@ void Engine::displayCallback() {
     GLfloat lightPosition[] = { 5.0f, 10.0f, 5.0f, 1.0f };
     glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
 
+    GLfloat light1Position[] = { 0.0f, 10.0f, 0.0f, 1.0f };
+    glLightfv(GL_LIGHT1, GL_POSITION, light1Position);
+
+    glPushMatrix();
+    glDisable(GL_TEXTURE_2D);
+    glTranslatef(0.0f, 10.0f, 0.0f);
+    glColor3f(1.0f, 1.0f, 0.8f);
+    glutSolidSphere(0.2f, 16, 16);
+    glPopMatrix();
+
   
     GLfloat floorAmbient[] = { 0.1f, 0.1f, 0.1f, 1.0f };
     GLfloat floorDiffuse[] = { 0.6f, 0.6f, 0.6f, 1.0f };
@@ -120,24 +136,16 @@ void Engine::displayCallback() {
     glMaterialfv(GL_FRONT, GL_SPECULAR, floorSpecular);
     glMaterialf(GL_FRONT, GL_SHININESS, floorShininess);
 
-    glBegin(GL_QUADS);
-    glNormal3f(0.0f, 1.0f, 0.0f); 
-    glVertex3f(-10.0f, -5.0f, -10.0f);
-    glVertex3f(10.0f, -5.0f, -10.0f);
-    glVertex3f(10.0f, -5.0f, 10.0f);
-    glVertex3f(-10.0f, -5.0f, 10.0f);
-    glEnd();
-
-   testWall->rotate(1, glm::vec3(0, 0, 1.0));
+   
     testWall->draw();
 
     
-    glPushMatrix();
-    glRotatef(rotationAngle, 0.0f, 1.0f, 0.0f);
+    //glPushMatrix();
+   // glRotatef(rotationAngle, 0.0f, 1.0f, 0.0f);
     for (Cube* cube : cubes) {
         cube->draw();
     }
-    glPopMatrix();
+   // glPopMatrix();
 
     glutSwapBuffers();
 }
@@ -163,16 +171,16 @@ void Engine::keyboardCallback(unsigned char key, int x, int y) {
         observer->translate(glm::vec3(0.0f, -speed, 0.0f));
     }
     else if (key == 'i') {
-        light1Position[1] += 1.0f;
+        testWall->translate(glm::vec3(0.0f, 0.0f, -speed));
     }
     else if (key == 'k') {
-        light1Position[1] -= 1.0f;
+        testWall->translate(glm::vec3(0.0f, 0.0f, speed));
     }
     else if (key == 'j') { 
-        light1Position[0] -= 1.0f;
+        testWall->translate(glm::vec3(-speed, 0.0f,  0.0f));
     }
     else if (key == 'l') { 
-        light1Position[0] += 1.0f;
+        testWall->translate(glm::vec3(speed, 0.0f, 0.0f));
     }
     else if (key == 27) { // ESC
         exit(0);
@@ -234,6 +242,15 @@ void Engine::timerCallback(int value) {
         rotationAngle -= 360.0f;
     }
 
+    
+
+    testWall->rotatePoint(1, glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+
+    for (int i = 0; i < cubes.size(); i++) {
+        glm::vec3 axis = glm::vec3(0.0f, 1.0f, 0.0f);
+        glm::vec3 point = glm::vec3(i * 0.2f, 0.0f, i * 0.1f); 
+        cubes[i]->rotatePoint(1.0f, axis, point);
+    }
     glutPostRedisplay();
     glutTimerFunc(1000 / 60, timerCallback, value); // 60 FPS
 }

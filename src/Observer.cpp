@@ -19,6 +19,14 @@ void Observer::rotate(float angle, const glm::vec3& axis) {
     target = position + glm::vec3(newTarget);
 }
 
+void Observer::rotatePoint(float angle, const glm::vec3& axis, const glm::vec3& point) {
+    this->translate(-point);
+
+    this->rotate(angle, axis);
+
+    this->translate(point);
+}
+
 void Observer::setPosition(const glm::vec3& newPosition) {
     target += (newPosition - position);
     position = newPosition;

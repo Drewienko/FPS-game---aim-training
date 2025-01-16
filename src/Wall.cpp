@@ -57,6 +57,14 @@ void Wall::rotate(float angle, const glm::vec3& axis) {
     }
 }
 
+void Wall::rotatePoint(float angle, const glm::vec3& axis, const glm::vec3& point) {
+    this->translate(-point);
+
+    this->rotate(angle, axis);
+
+    this->translate(point);
+}
+
 void Wall::scale(float sx, float sy) {
     size.x *= sx;
     size.y *= sy;
