@@ -20,6 +20,10 @@ std::vector<Cube*> cubes;
 float rotationAngle = 0.0f;
 Wall* testWall = nullptr;
 
+Wall* testFloor = nullptr;
+
+Wall* testCeiling = nullptr;
+
 GLfloat light1Position[] = { -10.0f, 10.0f, 10.0f, 1.0f };
 
 Engine::Engine(int argc, char** argv, int width, int height, const char* title) {
@@ -27,7 +31,7 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
     glutInitWindowSize(width, height);
     glutCreateWindow(title);
-
+    
     initSettings();
 
     observer = new Observer(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -51,6 +55,13 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
 
     GLuint wallTexture = BitmapHandler::loadBitmapFromFile("textures/wall.jpg");
     testWall = new Wall(-5.0f, -5.0f, -15.0f, 15.0f, 15.0f, wallTexture);
+
+
+    testFloor = new Wall(0.0f, -10.0f, 0.0f, 15.0f, 15.0f, wallTexture);
+   testFloor->rotatePoint(90, glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -15.0f, 0.0f));
+
+    //testCeiling = new Wall(0.0f, 15.0f, 0.0f, 15.0f, 15.0f, wallTexture);
+    //testCeiling->rotate(90, glm::vec3(1.0f, 1.0f, -1.0f));
 
     glutDisplayFunc(displayCallback);
     glutKeyboardFunc(keyboardCallback);
@@ -108,6 +119,7 @@ void Engine::initLighting() {
 }
 
 void Engine::displayCallback() {
+   // glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadMatrixf(glm::value_ptr(observer->getViewMatrix()));
 
@@ -138,7 +150,9 @@ void Engine::displayCallback() {
 
    
     testWall->draw();
+    testFloor->draw();
 
+    //testCeiling->draw();
     
     //glPushMatrix();
    // glRotatef(rotationAngle, 0.0f, 1.0f, 0.0f);
@@ -146,7 +160,7 @@ void Engine::displayCallback() {
         cube->draw();
     }
    // glPopMatrix();
-
+    setClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glutSwapBuffers();
 }
 
@@ -244,15 +258,14 @@ void Engine::timerCallback(int value) {
 
     
 
-    testWall->rotatePoint(1, glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-
+    testWall->rotate(1, glm::vec3(0.0f, 1.0f, -1.0f));
     for (int i = 0; i < cubes.size(); i++) {
         glm::vec3 axis = glm::vec3(0.0f, 1.0f, 0.0f);
-        glm::vec3 point = glm::vec3(i * 0.2f, 0.0f, i * 0.1f); 
+        glm::vec3 point = glm::vec3(i * 0.2f, 0.0f, i * 0.1f);
         cubes[i]->rotatePoint(1.0f, axis, point);
     }
     glutPostRedisplay();
-    glutTimerFunc(1000 / 60, timerCallback, value); // 60 FPS
+    glutTimerFunc(1000 / 165, timerCallback, value); // 60 FPS
 }
 
 void Engine::updateProjectionMatrix() {
