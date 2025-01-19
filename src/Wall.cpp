@@ -65,6 +65,22 @@ void Wall::rotatePoint(float angle, const glm::vec3& axis, const glm::vec3& poin
     this->translate(point);
 }
 
+void Wall::rotateAround(float angle, const glm::vec3& axis) {
+    float x=0.0, y = 0.0, z = 0.0;
+    for (int i = 0; i < 4; ++i) {
+        x += vertices[i * 3];
+        y += vertices[i * 3 + 1];
+        z += vertices[i * 3 + 2];
+    }
+    glm::vec3 point(x/4.0f, y / 4.0f, z / 4.0f);
+
+    this->translate(-point);
+
+    this->rotate(angle, axis);
+
+    this->translate(point);
+}
+
 void Wall::scale(float sx, float sy) {
     size.x *= sx;
     size.y *= sy;

@@ -55,10 +55,10 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
 
     GLuint wallTexture = BitmapHandler::loadBitmapFromFile("textures/wall.jpg");
     testWall = new Wall(-5.0f, -5.0f, -15.0f, 15.0f, 15.0f, wallTexture);
-
+    testWall->rotateAround(90, glm::vec3(1.0f, 0.0f, 0.0f));
 
     testFloor = new Wall(0.0f, -10.0f, 0.0f, 15.0f, 15.0f, wallTexture);
-   testFloor->rotatePoint(90, glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -15.0f, 0.0f));
+   testFloor->rotateAround(90, glm::vec3(1.0f, 0.0f, 0.0f));
 
     //testCeiling = new Wall(0.0f, 15.0f, 0.0f, 15.0f, 15.0f, wallTexture);
     //testCeiling->rotate(90, glm::vec3(1.0f, 1.0f, -1.0f));
@@ -139,7 +139,7 @@ void Engine::displayCallback() {
 
   
     GLfloat floorAmbient[] = { 0.1f, 0.1f, 0.1f, 1.0f };
-    GLfloat floorDiffuse[] = { 0.6f, 0.6f, 0.6f, 1.0f };
+    GLfloat floorDiffuse[] = { 0.5f, 0.5f, 0.5f, 1.0f };
     GLfloat floorSpecular[] = { 0.2f, 0.2f, 0.2f, 1.0f };
     GLfloat floorShininess = 10.0f;
 
@@ -258,14 +258,14 @@ void Engine::timerCallback(int value) {
 
     
 
-    testWall->rotate(1, glm::vec3(0.0f, 1.0f, -1.0f));
+    
     for (int i = 0; i < cubes.size(); i++) {
         glm::vec3 axis = glm::vec3(0.0f, 1.0f, 0.0f);
         glm::vec3 point = glm::vec3(i * 0.2f, 0.0f, i * 0.1f);
         cubes[i]->rotatePoint(1.0f, axis, point);
     }
     glutPostRedisplay();
-    glutTimerFunc(1000 / 165, timerCallback, value); // 60 FPS
+    glutTimerFunc(1000 / 60, timerCallback, value); // 60 FPS
 }
 
 void Engine::updateProjectionMatrix() {
