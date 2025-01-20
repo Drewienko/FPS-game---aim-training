@@ -83,76 +83,86 @@ Engine::~Engine() {
 
 void Engine::initSettings() {
     glEnable(GL_DEPTH_TEST);
+    setClearColor(0.0f, 0.0f, 0.0f);
+
+    initLighting();
+    glShadeModel(shadingMode);
+}
+
+void Engine::initLighting() {
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
-    glEnable(GL_COLOR_MATERIAL);
 
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    GLfloat ambientLight[] = { 0.05f, 0.05f, 0.05f, 1.0f };
+    GLfloat diffuseLight[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+    GLfloat specularLight[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    GLfloat lightPosition[] = { 0.0f, 10.0f, 0.0f, 1.0f };
 
-    GLfloat lightPosition[] = { 0.0f, 10.0f, 10.0f, 1.0f };
-    GLfloat lightAmbient[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-    GLfloat lightDiffuse[] = { 0.8f, 0.8f, 0.8f, 1.0f };
-    GLfloat lightSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-
+    glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, specularLight);
     glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
-    glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
+
+
+    glEnable(GL_LIGHT1);
+    GLfloat light1Position[] = { 2.0f, 5.0f, 2.0f, 1.0f };
+    GLfloat light1Diffuse[] = { 1.0f, 0.8f, 0.6f, 1.0f };
+    GLfloat light1Specular[] = { 1.0f, 0.9f, 0.7f, 1.0f };
+    GLfloat spotDirection[] = { 0.0f, -1.0f, 0.0f };
+
+    glLightfv(GL_LIGHT1, GL_POSITION, light1Position);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, light1Diffuse);
+    glLightfv(GL_LIGHT1, GL_SPECULAR, light1Specular);
+    glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 30.0f);
+    glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, spotDirection);
+    glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 10.0f);
+
+    glEnable(GL_COLOR_MATERIAL);
 }
 
 void Engine::displayCallback() {
+    // glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadMatrixf(glm::value_ptr(observer->getViewMatrix()));
 
-    // Set view and projection matrices
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    if (isPerspective) {
-        gluPerspective(60.0, (double)windowWidth / windowHeight, 0.1, 100.0);
-    }
-    else {
-        glOrtho(-10.0, 10.0, -10.0, 10.0, 0.1, 100.0);
-    }
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glm::mat4 view = observer->getViewMatrix();
-    glLoadMatrixf(glm::value_ptr(view));
+    GLfloat lightPosition[] = { 5.0f, 10.0f, 5.0f, 1.0f };
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
 
-    // Render ground/floor
-    glDisable(GL_LIGHTING);
-    glColor3f(0.5f, 0.5f, 0.5f); // Light gray floor
-    glBegin(GL_QUADS);
-    glVertex3f(-10.0f, -1.0f, -10.0f);
-    glVertex3f(10.0f, -1.0f, -10.0f);
-    glVertex3f(10.0f, -1.0f, 10.0f);
-    glVertex3f(-10.0f, -1.0f, 10.0f);
-    glEnd();
-    glEnable(GL_LIGHTING);
+    GLfloat light1Position[] = { 0.0f, 10.0f, 0.0f, 1.0f };
+    glLightfv(GL_LIGHT1, GL_POSITION, light1Position);
 
-    // Render cubes
+    glPushMatrix();
+    glDisable(GL_TEXTURE_2D);
+    glTranslatef(0.0f, 10.0f, 0.0f);
+    glColor3f(1.0f, 1.0f, 0.8f);
+    glutSolidSphere(0.2f, 16, 16);
+    glPopMatrix();
+
+
+    GLfloat floorAmbient[] = { 0.1f, 0.1f, 0.1f, 1.0f };
+    GLfloat floorDiffuse[] = { 0.6f, 0.6f, 0.6f, 1.0f };
+    GLfloat floorSpecular[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+    GLfloat floorShininess = 10.0f;
+
+    glMaterialfv(GL_FRONT, GL_AMBIENT, floorAmbient);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, floorDiffuse);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, floorSpecular);
+    glMaterialf(GL_FRONT, GL_SHININESS, floorShininess);
+
+
+    testWall->draw();
+    testFloor->draw();
+
+    //testCeiling->draw();
+
+    //glPushMatrix();
+   // glRotatef(rotationAngle, 0.0f, 1.0f, 0.0f);
     for (Cube* cube : cubes) {
         cube->draw();
     }
-
-    // Render shadows
-    GLfloat lightPosition[] = { 0.0f, 10.0f, 10.0f, 1.0f };
-    GLfloat shadowMatrix[16] = {
-        lightPosition[1], 0, 0, 0,
-        -lightPosition[0], 0, -lightPosition[2], -1,
-        0, 0, lightPosition[1], 0,
-        0, 0, 0, lightPosition[1]
-    };
-
-    glDisable(GL_LIGHTING);
-    glColor3f(0.2f, 0.2f, 0.2f); // Dark shadow color
-    for (Cube* cube : cubes) {
-        glPushMatrix();
-        glMultMatrixf(shadowMatrix);
-        cube->draw();
-        glPopMatrix();
-    }
-    glEnable(GL_LIGHTING);
-
+    // glPopMatrix();
+    setClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glutSwapBuffers();
 }
 
