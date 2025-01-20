@@ -20,6 +20,10 @@ public:
     const glm::vec3& getPosition() const;
     const glm::vec3& getTarget() const;
 
+    void moveForward(float distance);
+
+    void moveRight(float distance);
+
 private:
     glm::vec3 position;
     glm::vec3 target;
