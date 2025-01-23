@@ -193,10 +193,10 @@ void Engine::keyboardCallback(unsigned char key, int x, int y) {
     else if (key == 'k') {
         testWall->translate(glm::vec3(0.0f, 0.0f, speed));
     }
-    else if (key == 'j') { 
-        testWall->translate(glm::vec3(-speed, 0.0f,  0.0f));
+    else if (key == 'j') {
+        testWall->translate(glm::vec3(-speed, 0.0f, 0.0f));
     }
-    else if (key == 'l') { 
+    else if (key == 'l') {
         testWall->translate(glm::vec3(speed, 0.0f, 0.0f));
     }
     else if (key == 27) { // ESC
@@ -211,6 +211,16 @@ void Engine::keyboardCallback(unsigned char key, int x, int y) {
         shadingMode = GL_SMOOTH;
         glShadeModel(shadingMode);
         std::cout << "Gouraud Shading" << std::endl;
+    }
+    else if (key == 'b') {
+        glm::vec3 point = observer->getPosition();
+        float cubeColor[] = { 0.5f, 0.5f, 0.5f };
+        Cube *cube = new Cube(1.0, point.x, point.y, point.z, cubeColor);
+        glm::vec3 direction = 3.0f * glm::normalize(observer->getTarget()-point);
+
+        cube->translate(direction);
+        cubes.push_back(cube);
+
     }
 
     glutPostRedisplay();
@@ -238,10 +248,11 @@ void Engine::mouseMotionCallback(int x, int y) {
 
     int deltaX = x - lastMouseX;
     int deltaY = y - lastMouseY;
-
+    glm::vec3 point = observer->getPosition();
+    observer->translate(-point);
     observer->rotate(deltaX * 0.1f, glm::vec3(0.0f, 1.0f, 0.0f));
     observer->rotate(deltaY * 0.1f, glm::vec3(1.0f, 0.0f, 0.0f));
-
+    observer->translate(point);
     lastMouseX = x;
     lastMouseY = y;
 
@@ -265,7 +276,7 @@ void Engine::timerCallback(int value) {
     for (int i = 0; i < cubes.size(); i++) {
         glm::vec3 axis = glm::vec3(0.0f, 1.0f, 0.0f);
         glm::vec3 point = glm::vec3(i * 0.2f, 0.0f, i * 0.1f);
-        cubes[i]->rotatePoint(1.0f, axis, point);
+        //cubes[i]->rotatePoint(1.0f, axis, point);
     }
     glutPostRedisplay();
     glutTimerFunc(1000 / 60, timerCallback, value); // 60 FPS
