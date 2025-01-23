@@ -22,6 +22,13 @@ public:
     static void setClearColor(float r, float g, float b, float a = 1.0f);
 
 private:
+    GLuint depthMapFBO;
+    GLuint depthMap;
+    const unsigned int shadowWidth = 1024;  // Shadow map resolution
+    const unsigned int shadowHeight = 1024;
+
+    void initShadowMap();  // New method to initialize shadow mapping
+
     static bool isPerspective;
     static int windowWidth;
     static int windowHeight;
