@@ -26,41 +26,21 @@ Wall* testCeiling = nullptr;
 
 GLfloat light1Position[] = { -10.0f, 10.0f, 10.0f, 1.0f };
 
-// Function pointers for framebuffer operations
-PFNGLGENFRAMEBUFFERSPROC glGenFramebuffers = nullptr;
-PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer = nullptr;
-PFNGLFRAMEBUFFERTEXTURE2DPROC glFramebufferTexture2D = nullptr;
-PFNGLDRAWBUFFERSPROC glDrawBuffers = nullptr;
-PFNGLDELETEFRAMEBUFFERSPROC glDeleteFramebuffers = nullptr;
-PFNGLCHECKFRAMEBUFFERSTATUSPROC glCheckFramebufferStatus = nullptr;
-
-void loadFramebufferFunctions() {
-    glGenFramebuffers = (PFNGLGENFRAMEBUFFERSPROC)glutGetProcAddress("glGenFramebuffers");
-    glBindFramebuffer = (PFNGLBINDFRAMEBUFFERPROC)glutGetProcAddress("glBindFramebuffer");
-    glFramebufferTexture2D = (PFNGLFRAMEBUFFERTEXTURE2DPROC)glutGetProcAddress("glFramebufferTexture2D");
-    glDrawBuffers = (PFNGLDRAWBUFFERSPROC)glutGetProcAddress("glDrawBuffers");
-    glDeleteFramebuffers = (PFNGLDELETEFRAMEBUFFERSPROC)glutGetProcAddress("glDeleteFramebuffers");
-    glCheckFramebufferStatus = (PFNGLCHECKFRAMEBUFFERSTATUSPROC)glutGetProcAddress("glCheckFramebufferStatus");
-
-    // Check if all functions were loaded successfully
-    if (!glGenFramebuffers || !glBindFramebuffer || !glFramebufferTexture2D ||
-        !glDrawBuffers || !glDeleteFramebuffers || !glCheckFramebufferStatus) {
-        std::cerr << "Failed to load framebuffer OpenGL functions!" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-}
-
 Engine::Engine(int argc, char** argv, int width, int height, const char* title) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
     glutInitWindowSize(width, height);
     glutCreateWindow(title);
-    
+    GLenum err = glewInit();
+    if (err != GLEW_OK) {
+        std::cerr << "GLEW Initialization failed: " << glewGetErrorString(err) << std::endl;
+        //return -1;
+    }
     initSettings();
 
     observer = new Observer(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-   
+
     const float cubeColor[] = { 0.5f, 0.5f, 0.5f };
     GLuint woodTexture = BitmapHandler::loadBitmapFromFile("textures/wood.jpg");
 
@@ -82,7 +62,7 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
     testWall->rotateAround(90, glm::vec3(1.0f, 0.0f, 0.0f));
 
     testFloor = new Wall(0.0f, -10.0f, 0.0f, 15.0f, 15.0f, wallTexture);
-   testFloor->rotateAround(90, glm::vec3(1.0f, 0.0f, 0.0f));
+    testFloor->rotateAround(90, glm::vec3(1.0f, 0.0f, 0.0f));
 
     //testCeiling = new Wall(0.0f, 15.0f, 0.0f, 15.0f, 15.0f, wallTexture);
     //testCeiling->rotate(90, glm::vec3(1.0f, 1.0f, -1.0f));
@@ -111,32 +91,7 @@ void Engine::initSettings() {
 
     initLighting();
     glShadeModel(shadingMode);
-    initShadowMap();
 }
-
-void Engine::initShadowMap() {
-    // Create framebuffer for shadow mapping
-    glGenFramebuffers(1, &depthMapFBO);
-
-    // Create depth texture
-    glGenTextures(1, &depthMap);
-    glBindTexture(GL_TEXTURE_2D, depthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowWidth, shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-
-    // Attach depth texture to FBO
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
 
 void Engine::initLighting() {
     glEnable(GL_LIGHTING);
@@ -264,8 +219,8 @@ void Engine::keyboardCallback(unsigned char key, int x, int y) {
     else if (key == 'b') {
         glm::vec3 point = observer->getPosition();
         float cubeColor[] = { 0.5f, 0.5f, 0.5f };
-        Cube *cube = new Cube(1.0, point.x, point.y, point.z, cubeColor);
-        glm::vec3 direction = 3.0f * glm::normalize(observer->getTarget()-point);
+        Cube* cube = new Cube(1.0, point.x, point.y, point.z, cubeColor);
+        glm::vec3 direction = 3.0f * glm::normalize(observer->getTarget() - point);
 
         cube->translate(direction);
         cubes.push_back(cube);
@@ -300,8 +255,6 @@ void Engine::mouseMotionCallback(int x, int y) {
     glm::vec3 point = observer->getPosition();
     observer->translate(-point);
     observer->rotate(deltaX * 0.1f, glm::vec3(0.0f, 1.0f, 0.0f));
-    observer->translate(point);
-    observer->translate(-point);
     observer->rotate(deltaY * 0.1f, glm::vec3(1.0f, 0.0f, 0.0f));
     observer->translate(point);
     lastMouseX = x;
@@ -316,14 +269,14 @@ void Engine::reshapeCallback(int w, int h) {
 }
 
 void Engine::timerCallback(int value) {
-    rotationAngle += 1.0f; 
+    rotationAngle += 1.0f;
     if (rotationAngle >= 360.0f) {
         rotationAngle -= 360.0f;
     }
 
-    
 
-    
+
+
     for (int i = 0; i < cubes.size(); i++) {
         glm::vec3 axis = glm::vec3(0.0f, 1.0f, 0.0f);
         glm::vec3 point = glm::vec3(i * 0.2f, 0.0f, i * 0.1f);
