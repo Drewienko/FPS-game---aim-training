@@ -14,7 +14,7 @@ Wall::Wall(float x, float y, float z, float width, float height, GLuint texture)
     vertices[9] = x;         vertices[10] = y + height; vertices[11] = z;
 }
 
-void Wall::draw() {
+void Wall::draw(GLuint shaderProgram, const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) {
     glPushMatrix();
 
     glDisable(GL_COLOR_MATERIAL);

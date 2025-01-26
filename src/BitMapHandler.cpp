@@ -5,26 +5,50 @@
 
 GLuint BitmapHandler::loadBitmapFromFile(const std::string& filename) {
     int width, height, channels;
-    unsigned char* data = stbi_load(filename.c_str(), &width, &height, &channels, 0);
 
+    // Load image data using stb_image
+    stbi_set_flip_vertically_on_load(true); // Flip the image vertically
+    unsigned char* data = stbi_load(filename.c_str(), &width, &height, &channels, 0);
     if (!data) {
+        std::cerr << "Failed to load texture: " << filename << std::endl;
         return 0;
     }
 
+    // Determine image format
+    GLenum format = GL_RGB;
+    if (channels == 4) {
+        format = GL_RGBA;
+    }
+    else if (channels == 1) {
+        format = GL_RED;
+    }
+
+    // Generate OpenGL texture
     GLuint textureID;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0,
-        (channels == 4) ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, data);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+
+    // Set texture parameters
+    
+
+    glGenerateMipmap(GL_TEXTURE_2D); // Generate mipmaps
+
+    // Clean up
     stbi_image_free(data);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    std::cout << "Loaded texture: " << filename
+        << " [ID: " << textureID
+        << ", Format: " << (format == GL_RGBA ? "RGBA" : "RGB")
+        << ", Size: " << width << "x" << height
+        << "]" << std::endl;
 
     return textureID;
 }

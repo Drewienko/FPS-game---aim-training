@@ -2,6 +2,7 @@
 #define DRAWABLEOBJECT_H
 
 #include "GameObject.h"
+#include <GL/glew.h>
 #include "PrimitiveRenderer.h"
 #include <cmath>
 
@@ -21,7 +22,7 @@ public:
      * @brief Wirtualna metoda do rysowania obiektu.
      * @param renderer Wskaźnik na obiekt PrimitiveRenderer do rysowania.
      */
-    virtual void draw() = 0;
+    virtual void draw(GLuint shaderProgram, const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) = 0;
 };
 
 #endif

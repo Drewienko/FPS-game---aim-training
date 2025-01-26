@@ -1,6 +1,7 @@
 #ifndef BITMAPHANDLER_H
 #define BITMAPHANDLER_H
-
+#include <GL/glew.h>
+#include <iostream>
 #include <GL/freeglut.h>
 #include <vector>
 #include <string>

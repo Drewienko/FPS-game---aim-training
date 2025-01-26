@@ -9,7 +9,7 @@
 class Wall : public DrawableObject, public TransformableObject {
 public:
     Wall(float x, float y, float z, float width, float height, GLuint texture);
-    void draw() override;
+    void draw(GLuint shaderProgram, const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) override;
     void translate(const glm::vec3& direction) override;
     void rotate(float angle, const glm::vec3& axis) override;
     void rotatePoint(float angle, const glm::vec3& axis, const glm::vec3& point) override;

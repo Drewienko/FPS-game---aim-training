@@ -3,7 +3,17 @@
 #include "Cube.h"
 #include "Wall.h"
 
-//statyczne zmienne do zmiany
+// Shaders
+Shader* mainShader = nullptr;
+Shader* depthShader = nullptr;
+Shader* debugShader = nullptr;
+
+// Shadow mapping
+GLuint depthMapFBO;
+GLuint depthMap;
+const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+
+// Static variables
 bool Engine::isPerspective = true;
 int Engine::windowWidth = 800;
 int Engine::windowHeight = 600;
@@ -14,45 +24,51 @@ static int lastMouseY = -1;
 static GLenum shadingMode = GL_SMOOTH;
 
 Observer* observer = nullptr;
-
 Cube* texturedCube = nullptr;
 std::vector<Cube*> cubes;
 float rotationAngle = 0.0f;
 Wall* testWall = nullptr;
-
 Wall* testFloor = nullptr;
-
 Wall* testCeiling = nullptr;
 
 GLfloat light1Position[] = { -10.0f, 10.0f, 10.0f, 1.0f };
+GLuint texture = 0;
 
 Engine::Engine(int argc, char** argv, int width, int height, const char* title) {
     glutInit(&argc, argv);
+    glutInitContextVersion(4, 6); // Request OpenGL 4.6
+    glutInitContextProfile(GLUT_CORE_PROFILE); // Force core profile
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
     glutInitWindowSize(width, height);
     glutCreateWindow(title);
+    if (glGetString(GL_VERSION) == nullptr) {
+        std::cerr << "OpenGL context creation failed!" << std::endl;
+    }
+    else {
+        std::cout << "OpenGL context created successfully." << std::endl;
+    }
     GLenum err = glewInit();
     if (err != GLEW_OK) {
         std::cerr << "GLEW Initialization failed: " << glewGetErrorString(err) << std::endl;
-        //return -1;
     }
+    std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
+    std::cout << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
     initSettings();
 
     observer = new Observer(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-
     const float cubeColor[] = { 0.5f, 0.5f, 0.5f };
     GLuint woodTexture = BitmapHandler::loadBitmapFromFile("textures/wood.jpg");
-
+    texture = woodTexture;
     for (int i = -2; i <= 2; ++i) {
         for (int j = -2; j <= 2; ++j) {
             Cube* cube = new Cube(0.8f, i * 2.0f, j * 2.0f, 0.0f, cubeColor);
-            cube->setTextureForSide(0, woodTexture); // przod
-            cube->setTextureForSide(1, woodTexture); // tyl
-            cube->setTextureForSide(2, woodTexture); // lewo
-            cube->setTextureForSide(3, woodTexture); // prawo
-            cube->setTextureForSide(4, woodTexture); // gora
-            cube->setTextureForSide(5, woodTexture); // dol
+            cube->setTextureForSide(0, woodTexture);
+            cube->setTextureForSide(1, woodTexture);
+            cube->setTextureForSide(2, woodTexture);
+            cube->setTextureForSide(3, woodTexture);
+            cube->setTextureForSide(4, woodTexture);
+            cube->setTextureForSide(5, woodTexture);
             cubes.push_back(cube);
         }
     }
@@ -64,9 +80,6 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
     testFloor = new Wall(0.0f, -10.0f, 0.0f, 15.0f, 15.0f, wallTexture);
     testFloor->rotateAround(90, glm::vec3(1.0f, 0.0f, 0.0f));
 
-    //testCeiling = new Wall(0.0f, 15.0f, 0.0f, 15.0f, 15.0f, wallTexture);
-    //testCeiling->rotate(90, glm::vec3(1.0f, 1.0f, -1.0f));
-
     glutDisplayFunc(displayCallback);
     glutKeyboardFunc(keyboardCallback);
     glutReshapeFunc(reshapeCallback);
@@ -75,100 +88,116 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
     glutTimerFunc(1000 / 60, timerCallback, 0);
 }
 
-Engine::~Engine() {
-    delete observer;
-    for (Cube* cube : cubes) {
-        delete cube;
-    }
-    delete testWall;
-}
-
-
-
 void Engine::initSettings() {
+    // Enable depth testing
     glEnable(GL_DEPTH_TEST);
-    setClearColor(0.0f, 0.0f, 0.0f);
+    glDepthFunc(GL_LESS);
 
-    initLighting();
-    glShadeModel(shadingMode);
-}
+    // Enable backface culling
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
 
-void Engine::initLighting() {
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
+    // Set clear color
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
-    GLfloat ambientLight[] = { 0.05f, 0.05f, 0.05f, 1.0f };
-    GLfloat diffuseLight[] = { 0.8f, 0.8f, 0.8f, 1.0f };
-    GLfloat specularLight[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    GLfloat lightPosition[] = { 0.0f, 10.0f, 0.0f, 1.0f };
+    // Set viewport
+    glViewport(0, 0, windowWidth, windowHeight);
 
-    glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, specularLight);
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
+    // Debug OpenGL state
+    GLboolean depthTest = glIsEnabled(GL_DEPTH_TEST);
+    GLboolean cullFace = glIsEnabled(GL_CULL_FACE);
 
+    std::cout << "Depth Test: " << (depthTest ? "Enabled" : "Disabled")
+        << ", Cull Face: " << (cullFace ? "Enabled" : "Disabled") << std::endl;
 
-    glEnable(GL_LIGHT1);
-    GLfloat light1Position[] = { 2.0f, 5.0f, 2.0f, 1.0f };
-    GLfloat light1Diffuse[] = { 1.0f, 0.8f, 0.6f, 1.0f };
-    GLfloat light1Specular[] = { 1.0f, 0.9f, 0.7f, 1.0f };
-    GLfloat spotDirection[] = { 0.0f, -1.0f, 0.0f };
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    std::cout << "Viewport: x=" << viewport[0]
+        << ", y=" << viewport[1]
+        << ", width=" << viewport[2]
+        << ", height=" << viewport[3] << std::endl;
 
-    glLightfv(GL_LIGHT1, GL_POSITION, light1Position);
-    glLightfv(GL_LIGHT1, GL_DIFFUSE, light1Diffuse);
-    glLightfv(GL_LIGHT1, GL_SPECULAR, light1Specular);
-    glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 30.0f);
-    glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, spotDirection);
-    glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 10.0f);
+    mainShader = new Shader("shaders/vertex_shader.glsl", "shaders/fragment_shader.glsl");
 
-    glEnable(GL_COLOR_MATERIAL);
+    depthShader = new Shader("shaders/depth_vertex_shader.glsl", "shaders/depth_fragment_shader.glsl");
+
 }
 
 void Engine::displayCallback() {
-    // glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glLoadMatrixf(glm::value_ptr(observer->getViewMatrix()));
 
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 
-    GLfloat lightPosition[] = { 5.0f, 10.0f, 5.0f, 1.0f };
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
+    // Shadow pass
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 
-    GLfloat light1Position[] = { 0.0f, 10.0f, 0.0f, 1.0f };
-    glLightfv(GL_LIGHT1, GL_POSITION, light1Position);
+    depthShader->use();
 
-    glPushMatrix();
-    glDisable(GL_TEXTURE_2D);
-    glTranslatef(0.0f, 10.0f, 0.0f);
-    glColor3f(1.0f, 1.0f, 0.8f);
-    glutSolidSphere(0.2f, 16, 16);
-    glPopMatrix();
+    // Set the light space matrix
+    glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 7.5f);
+    glm::mat4 lightView = glm::lookAt(glm::vec3(2.0f, 4.0f, -5.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+    glUniformMatrix4fv(glGetUniformLocation(depthShader->getProgramID(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 
-
-    GLfloat floorAmbient[] = { 0.1f, 0.1f, 0.1f, 1.0f };
-    GLfloat floorDiffuse[] = { 0.6f, 0.6f, 0.6f, 1.0f };
-    GLfloat floorSpecular[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-    GLfloat floorShininess = 10.0f;
-
-    glMaterialfv(GL_FRONT, GL_AMBIENT, floorAmbient);
-    glMaterialfv(GL_FRONT, GL_DIFFUSE, floorDiffuse);
-    glMaterialfv(GL_FRONT, GL_SPECULAR, floorSpecular);
-    glMaterialf(GL_FRONT, GL_SHININESS, floorShininess);
-
-
-    testWall->draw();
-    testFloor->draw();
-
-    //testCeiling->draw();
-
-    //glPushMatrix();
-   // glRotatef(rotationAngle, 0.0f, 1.0f, 0.0f);
+    // Render the cubes for the shadow map
     for (Cube* cube : cubes) {
-        cube->draw();
+        glm::mat4 model = glm::mat4(1.0f); // Reset model matrix
+        cube->draw(depthShader->getProgramID(), model, glm::mat4(1.0f), glm::mat4(1.0f));
     }
-    // glPopMatrix();
-    setClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // Normal pass
+    glViewport(0, 0, windowWidth, windowHeight);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    mainShader->use();
+
+    // Uniform locations
+    GLint lightPosLoc = glGetUniformLocation(mainShader->getProgramID(), "lightPos");
+    GLint viewPosLoc = glGetUniformLocation(mainShader->getProgramID(), "viewPos");
+    GLint lightSpaceMatrixLoc = glGetUniformLocation(mainShader->getProgramID(), "lightSpaceMatrix");
+    GLint shadowMapLoc = glGetUniformLocation(mainShader->getProgramID(), "shadowMap");
+
+    // Set light and camera uniforms
+    glm::vec3 lightPos = glm::vec3(2.0f, 4.0f, -5.0f); // Example light position
+    glm::vec3 viewPos = observer->getPosition();       // Camera position
+
+    glUniform3fv(lightPosLoc, 1, glm::value_ptr(lightPos));
+    glUniform3fv(viewPosLoc, 1, glm::value_ptr(viewPos));
+    glUniformMatrix4fv(lightSpaceMatrixLoc, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+
+    // Bind shadow map
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glUniform1i(shadowMapLoc, 1);
+
+    // Set model, view, projection matrices (existing code)
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 view = observer->getViewMatrix();
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
+
+    glUniformMatrix4fv(glGetUniformLocation(mainShader->getProgramID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(glGetUniformLocation(mainShader->getProgramID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(glGetUniformLocation(mainShader->getProgramID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+    // Render the cubes
+    for (Cube* cube : cubes) {
+        cube->draw(mainShader->getProgramID(), model, view, projection);
+    }
+
     glutSwapBuffers();
 }
+
+
+
+
+
 
 
 void Engine::keyboardCallback(unsigned char key, int x, int y) {
@@ -277,11 +306,11 @@ void Engine::timerCallback(int value) {
 
 
 
-    for (int i = 0; i < cubes.size(); i++) {
-        glm::vec3 axis = glm::vec3(0.0f, 1.0f, 0.0f);
-        glm::vec3 point = glm::vec3(i * 0.2f, 0.0f, i * 0.1f);
-        //cubes[i]->rotatePoint(1.0f, axis, point);
+    for (Cube* cube : cubes) {
+       // cube->translate(glm::vec3(1.0f, 0.0f, 0.0f));
+        //cube->rotate(1, glm::vec3(1.0f, 0.0f, 0.0f));
     }
+    
     glutPostRedisplay();
     glutTimerFunc(1000 / 60, timerCallback, value); // 60 FPS
 }
@@ -307,4 +336,20 @@ void Engine::setClearColor(float r, float g, float b, float a) {
 
 void Engine::start() {
     glutMainLoop();
+}
+
+Engine::~Engine() {
+    delete observer;
+    for (Cube* cube : cubes) {
+        delete cube;
+    }
+    delete testWall;
+    delete testFloor;
+
+    delete mainShader;
+    delete depthShader;
+    delete debugShader;
+
+    glDeleteFramebuffers(1, &depthMapFBO);
+    glDeleteTextures(1, &depthMap);
 }

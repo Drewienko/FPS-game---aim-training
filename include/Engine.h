@@ -3,11 +3,13 @@
 
 #include <iostream>
 #include <GL/glew.h>
+#include "Shader.h"
 #include <GL/freeglut.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include "PrimitiveRenderer.h"
 #include "Observer.h"
@@ -22,15 +24,15 @@ public:
     void start();
     static void setClearColor(float r, float g, float b, float a = 1.0f);
 
-private:
+
 
     static bool isPerspective;
     static int windowWidth;
     static int windowHeight;
     static Observer* observer;
-
+private:
     void initSettings();
-    void initLighting();
+    void initShadowMapping();
     static void displayCallback();
     static void keyboardCallback(unsigned char key, int x, int y);
     static void reshapeCallback(int w, int h);

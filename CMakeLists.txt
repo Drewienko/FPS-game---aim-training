@@ -44,6 +44,7 @@ set(SOURCE_FILES
     Observer
     BitMapHandler
     Wall
+    Shader
 )
 
 
@@ -70,18 +71,22 @@ INCLUDE_DIRECTORIES(
 
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 
+set(SHADERS
 
-TARGET_LINK_LIBRARIES(
-    ${PROJECT_NAME} PRIVATE
-    freeglut
-    glm::glm
-    "${CMAKE_SOURCE_DIR}/lib/glew32.lib"
+    ${CMAKE_SOURCE_DIR}/shaders/vertex_shader.glsl
+    ${CMAKE_SOURCE_DIR}/shaders/fragment_shader.glsl
+    ${CMAKE_SOURCE_DIR}/shaders/depth_fragment_shader.glsl
+    ${CMAKE_SOURCE_DIR}/shaders/depth_vertex_shader.glsl
+    ${CMAKE_SOURCE_DIR}/shaders/debug_fragment_shader.glsl
+    ${CMAKE_SOURCE_DIR}/shaders/debug_vertex_shader.glsl
 )
 
-add_custom_target(copy-files ALL
-    COMMAND ${CMAKE_COMMAND} -E copy
-    ${freeglut_BINARY_DIR}/bin/freeglutd.dll
-    ${CMAKE_BINARY_DIR}
+
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/shaders
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders
 )
 
 add_custom_command(
@@ -90,5 +95,24 @@ add_custom_command(
     ${CMAKE_SOURCE_DIR}/textures
     $<TARGET_FILE_DIR:${PROJECT_NAME}>/textures
 )
+
+# Add an install rule for shaders
+install(FILES ${SHADERS} DESTINATION shaders)
+
+TARGET_LINK_LIBRARIES(
+    ${PROJECT_NAME} PRIVATE
+    freeglut
+    glm::glm
+    "${CMAKE_SOURCE_DIR}/lib/glew32.lib"
+)
+
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+    ${freeglut_BINARY_DIR}/bin/freeglutd.dll
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>
+)
+
+
 
 
