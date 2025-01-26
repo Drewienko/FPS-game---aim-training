@@ -25,7 +25,7 @@ public:
     static void setClearColor(float r, float g, float b, float a = 1.0f);
 
 
-
+    
     static bool isPerspective;
     static int windowWidth;
     static int windowHeight;

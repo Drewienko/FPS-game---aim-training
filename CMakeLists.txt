@@ -38,11 +38,11 @@ project ("Engine-3D")
 
 set(SOURCE_FILES
     main
-    Engine
-    PrimitiveRenderer
-    Cube
-    Observer
     BitMapHandler
+    Cube
+    Engine
+    Observer
+    PrimitiveRenderer
     Wall
     Shader
 )

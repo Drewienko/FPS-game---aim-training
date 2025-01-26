@@ -22,7 +22,7 @@ static bool isMousePressed = false;
 static int lastMouseX = -1;
 static int lastMouseY = -1;
 static GLenum shadingMode = GL_SMOOTH;
-
+static int debugmode;
 Observer* observer = nullptr;
 Cube* texturedCube = nullptr;
 std::vector<Cube*> cubes;
@@ -128,19 +128,23 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
 
     cubes.clear();
     walls.clear();
-    float cubeColor[] = { 0.5f, 0.5f, 0.5f };
-    Cube* cube = new Cube(1.0f, 0.0f, 1.0f, -5.0f, cubeColor); // Positioned slightly above the ground
-    cube->setTextureForSide(0, woodTexture);
-    cube->setTextureForSide(1, woodTexture);
-    cube->setTextureForSide(2, woodTexture);
-    cube->setTextureForSide(3, woodTexture);
-    cube->setTextureForSide(4, woodTexture);
-    cube->setTextureForSide(5, woodTexture);
+
+   // GLuint wallTexture = BitmapHandler::loadBitmapFromFile("textures/wall.jpg");
+    GLuint cubeTexture = BitmapHandler::loadBitmapFromFile("textures/wood.jpg");
+
+    // Create a cube in front of the wall
+    Cube* cube = new Cube(1.0f, 0.0f, 0.5f, -2.0f, glm::value_ptr(glm::vec3(0.5f, 0.5f, 0.5f)));
+    cube->setTextureForSide(0, cubeTexture);
+    cube->setTextureForSide(1, cubeTexture);
+    cube->setTextureForSide(2, cubeTexture);
+    cube->setTextureForSide(3, cubeTexture);
+    cube->setTextureForSide(4, cubeTexture);
+    cube->setTextureForSide(5, cubeTexture);
     cubes.push_back(cube);
 
-    // Create a large plane (floor)
-    Wall* floor = new Wall(20.0f, 20.0f, 0.0f, -10.0f, 0.0f, wallTexture); // Large floor
-    walls.push_back(floor);
+    // Create a wall behind the cube
+    Wall* wall = new Wall(10.0f, 5.0f, 0.0f, 0.0f, -5.0f, wallTexture);
+    walls.push_back(wall);
 
     glutDisplayFunc(displayCallback);
     glutKeyboardFunc(keyboardCallback);
@@ -166,6 +170,8 @@ void Engine::initSettings() {
     // Set viewport
     glViewport(0, 0, windowWidth, windowHeight);
 
+
+    debugmode = 0;
     // Debug OpenGL state
     GLboolean depthTest = glIsEnabled(GL_DEPTH_TEST);
     GLboolean cullFace = glIsEnabled(GL_CULL_FACE);
@@ -191,36 +197,32 @@ void Engine::initSettings() {
 
 // Initialize lights with positions, colors, and shadow maps
 void Engine::initializeLights() {
-    for (int i = 0; i < 1; ++i) {
-        Light light;
-        light.position = (i == 0) ? glm::vec3(10.0f, 0.0f, 15.0f) :
-            (i == 1) ? glm::vec3(-3.0f, 6.0f, 3.0f) :
-            glm::vec3(1.0f, 3.0f, 2.0f);
-        light.color = (i == 0) ? glm::vec3(1.0f, 0.9f, 0.8f) : // Dimmer light
-            (i == 1) ? glm::vec3(0.5f, 0.6f, 0.8f) :
-            glm::vec3(0.7f, 0.7f, 0.7f);
+    lights.clear(); // Clear existing lights
 
+    Light light;
+    light.position = glm::vec3(-5.0f, -5.0f, 5.0f); // Position the light above and to the side
+    light.color = glm::vec3(3.0f, 3.0f, 3.0f);    // White light
 
-        glGenFramebuffers(1, &light.shadowFBO);
-        glGenTextures(1, &light.shadowMap);
-        glBindTexture(GL_TEXTURE_2D, light.shadowMap);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-        float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
-        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    // Create shadow map
+    glGenFramebuffers(1, &light.shadowFBO);
+    glGenTextures(1, &light.shadowMap);
+    glBindTexture(GL_TEXTURE_2D, light.shadowMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, light.shadowFBO);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, light.shadowMap, 0);
-        glDrawBuffer(GL_NONE);
-        glReadBuffer(GL_NONE);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, light.shadowFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, light.shadowMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        lights.push_back(light);
-    }
-} 
+    lights.push_back(light);
+}
 
 GLuint quadVAO = 0;
 GLuint quadVBO = 0;
@@ -273,46 +275,46 @@ void Engine::displayCallback() {
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    
 
-    // Shadow Pass for Multiple Lights
+    // Shadow Pass
+    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
     for (size_t i = 0; i < lights.size(); ++i) {
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, lights[i].shadowFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
-        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glCullFace(GL_FRONT); // Cull front faces during shadow pass
 
         depthShader->use();
 
-        glm::mat4 lightProjection = glm::ortho(-25.0f, 25.0f, -25.0f, 25.0f, 1.0f, 100.0f);
-
-        //glm::mat4 lightProjection = glm::perspective(glm::radians(90.0f), 1.0f, 1.0f, 50.0f);
-
-
-
-        glm::mat4 lightView = glm::lookAt(lights[i].position, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 lightProjection = glm::ortho(-30.0f, 30.0f, -30.0f, 30.0f, 1.0f, 100.0f);
+        glm::mat4 lightView = glm::lookAt(
+            lights[i].position, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         lights[i].lightSpaceMatrix = lightProjection * lightView;
-        std::cout << "Light Space Matrix for Light " << i << ":\n"
-            << glm::to_string(lights[i].lightSpaceMatrix) << std::endl;
+
         glUniformMatrix4fv(glGetUniformLocation(depthShader->getProgramID(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lights[i].lightSpaceMatrix));
+        for (Wall* wall : walls) {
+            std::cout << "Drawing wall for shadow pass\n";
+            glDisable(GL_CULL_FACE);
+            glm::mat4 model = glm::mat4(1.0f);
+            wall->draw(depthShader->getProgramID(), model, glm::mat4(1.0f), glm::mat4(1.0f));
+        }
         glCullFace(GL_FRONT);
-        // Render all objects
+
         for (Cube* cube : cubes) {
             glm::mat4 model = glm::mat4(1.0f);
             cube->draw(depthShader->getProgramID(), model, glm::mat4(1.0f), glm::mat4(1.0f));
         }
-        for (Wall* wall : walls) {
-            glm::mat4 model = glm::mat4(1.0f);
-            wall->draw(depthShader->getProgramID(), model, glm::mat4(1.0f), glm::mat4(1.0f));
-        }
 
+        
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
+    // Main Render Pass
     glViewport(0, 0, windowWidth, windowHeight);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-    // Main Render Pass
+    glCullFace(GL_BACK); // Restore back-face culling
+
     mainShader->use();
+    glUniform1i(glGetUniformLocation(mainShader->getProgramID(), "debugMode"), debugmode);
     glUniform1i(glGetUniformLocation(mainShader->getProgramID(), "numLights"), lights.size());
 
     glm::mat4 view = observer->getViewMatrix();
@@ -324,32 +326,36 @@ void Engine::displayCallback() {
     for (size_t i = 0; i < lights.size(); ++i) {
         std::string lightPosUniform = "lights[" + std::to_string(i) + "].position";
         std::string lightColorUniform = "lights[" + std::to_string(i) + "].color";
-        std::string lightSpaceMatrixUniform = "lights[" + std::to_string(i) + "].lightSpaceMatrix";
+        std::string lightSpaceMatrixUniform = "lightSpaceMatrix[" + std::to_string(i) + "]";
         std::string shadowMapUniform = "lights[" + std::to_string(i) + "].shadowMap";
 
         glUniform3fv(glGetUniformLocation(mainShader->getProgramID(), lightPosUniform.c_str()), 1, glm::value_ptr(lights[i].position));
         glUniform3fv(glGetUniformLocation(mainShader->getProgramID(), lightColorUniform.c_str()), 1, glm::value_ptr(lights[i].color));
         glUniformMatrix4fv(glGetUniformLocation(mainShader->getProgramID(), lightSpaceMatrixUniform.c_str()), 1, GL_FALSE, glm::value_ptr(lights[i].lightSpaceMatrix));
 
-        glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE6 + i);
         glBindTexture(GL_TEXTURE_2D, lights[i].shadowMap);
-        glUniform1i(glGetUniformLocation(mainShader->getProgramID(), shadowMapUniform.c_str()), 1 + i);
-    }
-    glCullFace(GL_BACK);
-    // Render scene objects
-    for (Cube* cube : cubes) {
-        glm::mat4 model = glm::mat4(1.0f);
-        cube->draw(mainShader->getProgramID(), model, view, projection);
+        glUniform1i(glGetUniformLocation(mainShader->getProgramID(), shadowMapUniform.c_str()),6+ i);
+        std::cout << "Binding shadow map for light " << i << ": " << lights[i].shadowMap << std::endl;
     }
     for (Wall* wall : walls) {
         glm::mat4 model = glm::mat4(1.0f);
         wall->draw(mainShader->getProgramID(), model, view, projection);
     }
-    if(shadingMode == GL_FLAT)
-         renderShadowMapDebug(lights[0].shadowMap);
+
+    for (Cube* cube : cubes) {
+        glm::mat4 model = glm::mat4(1.0f);
+        cube->draw(mainShader->getProgramID(), model, view, projection);
+    }
+
+    
+
+    //Uncomment to visualize shadow map
+     //renderShadowMapDebug(lights[0].shadowMap);
 
     glutSwapBuffers();
 }
+
 
 
 
@@ -375,7 +381,18 @@ void Engine::keyboardCallback(unsigned char key, int x, int y) {
     else if (key == 'e') {
         observer->translate(glm::vec3(0.0f, -speed, 0.0f));
     }
-
+    if (key == '1') {
+        debugmode =0;
+    }
+    else if (key == '2') {
+        debugmode = 1;
+    }
+    else if (key == '3') {
+        debugmode = 2;
+    }
+    else if (key == '4') {
+        debugmode = 3;
+    }
     
 
     // Shading modes
