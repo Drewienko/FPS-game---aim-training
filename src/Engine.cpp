@@ -11,7 +11,7 @@ Shader* debugShader = nullptr;
 // Shadow mapping
 GLuint depthMapFBO;
 GLuint depthMap;
-const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
 
 // Static variables
 bool Engine::isPerspective = true;
@@ -26,12 +26,21 @@ static GLenum shadingMode = GL_SMOOTH;
 Observer* observer = nullptr;
 Cube* texturedCube = nullptr;
 std::vector<Cube*> cubes;
+std::vector<Wall*> walls;
 float rotationAngle = 0.0f;
 Wall* testWall = nullptr;
 Wall* testFloor = nullptr;
-Wall* testCeiling = nullptr;
+Wall* testCeiling = nullptr; 
+struct Light {
+    glm::vec3 position;
+    glm::vec3 color;
+    GLuint shadowFBO;
+    GLuint shadowMap;
+    glm::mat4 lightSpaceMatrix;
+};
 
-GLfloat light1Position[] = { -10.0f, 10.0f, 10.0f, 1.0f };
+std::vector<Light> lights;
+
 GLuint texture = 0;
 
 Engine::Engine(int argc, char** argv, int width, int height, const char* title) {
@@ -57,28 +66,81 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
 
     observer = new Observer(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    const float cubeColor[] = { 0.5f, 0.5f, 0.5f };
+    // Load textures
+    GLuint wallTexture = BitmapHandler::loadBitmapFromFile("textures/wall.jpg");
     GLuint woodTexture = BitmapHandler::loadBitmapFromFile("textures/wood.jpg");
-    texture = woodTexture;
-    for (int i = -2; i <= 2; ++i) {
-        for (int j = -2; j <= 2; ++j) {
-            Cube* cube = new Cube(0.8f, i * 2.0f, j * 2.0f, 0.0f, cubeColor);
-            cube->setTextureForSide(0, woodTexture);
-            cube->setTextureForSide(1, woodTexture);
-            cube->setTextureForSide(2, woodTexture);
-            cube->setTextureForSide(3, woodTexture);
-            cube->setTextureForSide(4, woodTexture);
-            cube->setTextureForSide(5, woodTexture);
-            cubes.push_back(cube);
+
+    // Room dimensions
+    float roomWidth = 10.0f;
+    float roomHeight = 10.0f;
+    float roomDepth = 10.0f;
+
+    // Cube dimensions
+    float cubeSize = 1.0f; // Size of each cube
+    float spacing = 2.5f;  // Space between cubes
+
+    // Spawn cubes at varying heights and positions
+    for (int i = -1; i <= 1; ++i) {       // X-axis
+        for (int j = -1; j <= 1; ++j) {   // Z-axis
+            float x = i * spacing;                       // X position
+            float y = -roomHeight / 2.0f + cubeSize;     // Y position (just above the floor)
+            float z = j * spacing;                       // Z position
+
+            Cube* newCube = new Cube(cubeSize, x, y, z, glm::value_ptr(glm::vec3(0.5f, 0.5f, 0.5f)));
+            newCube->setTextureForSide(0, woodTexture); // Front
+            newCube->setTextureForSide(1, woodTexture); // Back
+            newCube->setTextureForSide(2, woodTexture); // Left
+            newCube->setTextureForSide(3, woodTexture); // Right
+            newCube->setTextureForSide(4, woodTexture); // Top
+            newCube->setTextureForSide(5, woodTexture); // Bottom
+            cubes.push_back(newCube);
         }
     }
 
-    GLuint wallTexture = BitmapHandler::loadBitmapFromFile("textures/wall.jpg");
-    testWall = new Wall(-5.0f, -5.0f, -15.0f, 15.0f, 15.0f, wallTexture);
-    testWall->rotateAround(90, glm::vec3(1.0f, 0.0f, 0.0f));
+    
 
-    testFloor = new Wall(0.0f, -10.0f, 0.0f, 15.0f, 15.0f, wallTexture);
-    testFloor->rotateAround(90, glm::vec3(1.0f, 0.0f, 0.0f));
+    // Load textures
+   // GLuint woodTexture = BitmapHandler::loadBitmapFromFile("textures/wood.jpg");
+    //GLuint floorTexture = BitmapHandler::loadBitmapFromFile("textures/floor.jpg");
+
+    // Create a single cube
+   
+
+    // Spawn a single elevated cube to test shadow casting
+    Cube* elevatedCube = new Cube(cubeSize, 0.0f, -roomHeight / 2.0f + cubeSize * 3.0f, 0.0f, glm::value_ptr(glm::vec3(0.5f, 0.2f, 0.7f)));
+    elevatedCube->setTextureForSide(0, woodTexture);
+    elevatedCube->setTextureForSide(1, woodTexture);
+    elevatedCube->setTextureForSide(2, woodTexture);
+    elevatedCube->setTextureForSide(3, woodTexture);
+    elevatedCube->setTextureForSide(4, woodTexture);
+    elevatedCube->setTextureForSide(5, woodTexture);
+    cubes.push_back(elevatedCube);
+
+    // Add a vertical wall in the center to catch shadows
+    Wall* shadowWall = new Wall(roomDepth, roomHeight, 0.0f, 0.0f, 0.0f, wallTexture);
+    walls.push_back(shadowWall);
+
+    // Add an angled wall for more shadow variation
+    Wall* angledWall = new Wall(roomDepth, roomHeight, -3.0f, -1.0f, -3.0f, wallTexture);
+    angledWall->rotateAround(45.0f, glm::vec3(0.0f, 1.0f, 0.0f)); // Rotate 45 degrees around Y-axis
+    walls.push_back(angledWall);
+
+
+    cubes.clear();
+    walls.clear();
+    float cubeColor[] = { 0.5f, 0.5f, 0.5f };
+    Cube* cube = new Cube(1.0f, 0.0f, 1.0f, -5.0f, cubeColor); // Positioned slightly above the ground
+    cube->setTextureForSide(0, woodTexture);
+    cube->setTextureForSide(1, woodTexture);
+    cube->setTextureForSide(2, woodTexture);
+    cube->setTextureForSide(3, woodTexture);
+    cube->setTextureForSide(4, woodTexture);
+    cube->setTextureForSide(5, woodTexture);
+    cubes.push_back(cube);
+
+    // Create a large plane (floor)
+    Wall* floor = new Wall(20.0f, 20.0f, 0.0f, -10.0f, 0.0f, wallTexture); // Large floor
+    walls.push_back(floor);
 
     glutDisplayFunc(displayCallback);
     glutKeyboardFunc(keyboardCallback);
@@ -122,6 +184,88 @@ void Engine::initSettings() {
 
     depthShader = new Shader("shaders/depth_vertex_shader.glsl", "shaders/depth_fragment_shader.glsl");
 
+    debugShader = new Shader("shaders/debug_vertex_shader.glsl", "shaders/debug_fragment_shader.glsl");
+
+    initializeLights();
+}
+
+// Initialize lights with positions, colors, and shadow maps
+void Engine::initializeLights() {
+    for (int i = 0; i < 1; ++i) {
+        Light light;
+        light.position = (i == 0) ? glm::vec3(10.0f, 0.0f, 15.0f) :
+            (i == 1) ? glm::vec3(-3.0f, 6.0f, 3.0f) :
+            glm::vec3(1.0f, 3.0f, 2.0f);
+        light.color = (i == 0) ? glm::vec3(1.0f, 0.9f, 0.8f) : // Dimmer light
+            (i == 1) ? glm::vec3(0.5f, 0.6f, 0.8f) :
+            glm::vec3(0.7f, 0.7f, 0.7f);
+
+
+        glGenFramebuffers(1, &light.shadowFBO);
+        glGenTextures(1, &light.shadowMap);
+        glBindTexture(GL_TEXTURE_2D, light.shadowMap);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, light.shadowFBO);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, light.shadowMap, 0);
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        lights.push_back(light);
+    }
+} 
+
+GLuint quadVAO = 0;
+GLuint quadVBO = 0;
+
+void setupQuad() {
+    float quadVertices[] = {
+        // positions        // texCoords
+        -1.0f, -1.0f, 0.0f,  0.0f, 0.0f,
+         1.0f, -1.0f, 0.0f,  1.0f, 0.0f,
+         1.0f,  1.0f, 0.0f,  1.0f, 1.0f,
+        -1.0f, -1.0f, 0.0f,  0.0f, 0.0f,
+         1.0f,  1.0f, 0.0f,  1.0f, 1.0f,
+        -1.0f,  1.0f, 0.0f,  0.0f, 1.0f
+    };
+
+    glGenVertexArrays(1, &quadVAO);
+    glGenBuffers(1, &quadVBO);
+    glBindVertexArray(quadVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+
+    glBindVertexArray(0);
+}
+
+void renderShadowMapDebug(GLuint shadowMap) {
+    setupQuad();
+    // Debug function to visualize shadow map
+    glViewport(0, 0, 512, 512); // Adjust size as needed
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    debugShader->use();
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, shadowMap);
+    glUniform1i(glGetUniformLocation(debugShader->getProgramID(), "shadowMap"), 0);
+
+    // Render a simple quad to display the shadow map
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
 }
 
 void Engine::displayCallback() {
@@ -129,79 +273,90 @@ void Engine::displayCallback() {
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+    
 
-    // Shadow pass
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glClear(GL_DEPTH_BUFFER_BIT);
-    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+    // Shadow Pass for Multiple Lights
+    for (size_t i = 0; i < lights.size(); ++i) {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 
-    depthShader->use();
+        depthShader->use();
 
-    // Set the light space matrix
-    glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 7.5f);
-    glm::mat4 lightView = glm::lookAt(glm::vec3(2.0f, 4.0f, -5.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    glm::mat4 lightSpaceMatrix = lightProjection * lightView;
-    glUniformMatrix4fv(glGetUniformLocation(depthShader->getProgramID(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+        glm::mat4 lightProjection = glm::ortho(-25.0f, 25.0f, -25.0f, 25.0f, 1.0f, 100.0f);
 
-    // Render the cubes for the shadow map
-    for (Cube* cube : cubes) {
-        glm::mat4 model = glm::mat4(1.0f); // Reset model matrix
-        cube->draw(depthShader->getProgramID(), model, glm::mat4(1.0f), glm::mat4(1.0f));
+        //glm::mat4 lightProjection = glm::perspective(glm::radians(90.0f), 1.0f, 1.0f, 50.0f);
+
+
+
+        glm::mat4 lightView = glm::lookAt(lights[i].position, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        lights[i].lightSpaceMatrix = lightProjection * lightView;
+        std::cout << "Light Space Matrix for Light " << i << ":\n"
+            << glm::to_string(lights[i].lightSpaceMatrix) << std::endl;
+        glUniformMatrix4fv(glGetUniformLocation(depthShader->getProgramID(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lights[i].lightSpaceMatrix));
+        glCullFace(GL_FRONT);
+        // Render all objects
+        for (Cube* cube : cubes) {
+            glm::mat4 model = glm::mat4(1.0f);
+            cube->draw(depthShader->getProgramID(), model, glm::mat4(1.0f), glm::mat4(1.0f));
+        }
+        for (Wall* wall : walls) {
+            glm::mat4 model = glm::mat4(1.0f);
+            wall->draw(depthShader->getProgramID(), model, glm::mat4(1.0f), glm::mat4(1.0f));
+        }
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    // Normal pass
     glViewport(0, 0, windowWidth, windowHeight);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+    
+    // Main Render Pass
     mainShader->use();
+    glUniform1i(glGetUniformLocation(mainShader->getProgramID(), "numLights"), lights.size());
 
-    // Uniform locations
-    GLint lightPosLoc = glGetUniformLocation(mainShader->getProgramID(), "lightPos");
-    GLint viewPosLoc = glGetUniformLocation(mainShader->getProgramID(), "viewPos");
-    GLint lightSpaceMatrixLoc = glGetUniformLocation(mainShader->getProgramID(), "lightSpaceMatrix");
-    GLint shadowMapLoc = glGetUniformLocation(mainShader->getProgramID(), "shadowMap");
-
-    // Set light and camera uniforms
-    glm::vec3 lightPos = glm::vec3(2.0f, 4.0f, -5.0f); // Example light position
-    glm::vec3 viewPos = observer->getPosition();       // Camera position
-
-    glUniform3fv(lightPosLoc, 1, glm::value_ptr(lightPos));
-    glUniform3fv(viewPosLoc, 1, glm::value_ptr(viewPos));
-    glUniformMatrix4fv(lightSpaceMatrixLoc, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
-
-    // Bind shadow map
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, depthMap);
-    glUniform1i(shadowMapLoc, 1);
-
-    // Set model, view, projection matrices (existing code)
-    glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 view = observer->getViewMatrix();
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
 
-    glUniformMatrix4fv(glGetUniformLocation(mainShader->getProgramID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(glGetUniformLocation(mainShader->getProgramID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(glGetUniformLocation(mainShader->getProgramID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-    // Render the cubes
+    for (size_t i = 0; i < lights.size(); ++i) {
+        std::string lightPosUniform = "lights[" + std::to_string(i) + "].position";
+        std::string lightColorUniform = "lights[" + std::to_string(i) + "].color";
+        std::string lightSpaceMatrixUniform = "lights[" + std::to_string(i) + "].lightSpaceMatrix";
+        std::string shadowMapUniform = "lights[" + std::to_string(i) + "].shadowMap";
+
+        glUniform3fv(glGetUniformLocation(mainShader->getProgramID(), lightPosUniform.c_str()), 1, glm::value_ptr(lights[i].position));
+        glUniform3fv(glGetUniformLocation(mainShader->getProgramID(), lightColorUniform.c_str()), 1, glm::value_ptr(lights[i].color));
+        glUniformMatrix4fv(glGetUniformLocation(mainShader->getProgramID(), lightSpaceMatrixUniform.c_str()), 1, GL_FALSE, glm::value_ptr(lights[i].lightSpaceMatrix));
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, lights[i].shadowMap);
+        glUniform1i(glGetUniformLocation(mainShader->getProgramID(), shadowMapUniform.c_str()), 1 + i);
+    }
+    glCullFace(GL_BACK);
+    // Render scene objects
     for (Cube* cube : cubes) {
+        glm::mat4 model = glm::mat4(1.0f);
         cube->draw(mainShader->getProgramID(), model, view, projection);
     }
+    for (Wall* wall : walls) {
+        glm::mat4 model = glm::mat4(1.0f);
+        wall->draw(mainShader->getProgramID(), model, view, projection);
+    }
+    if(shadingMode == GL_FLAT)
+         renderShadowMapDebug(lights[0].shadowMap);
 
     glutSwapBuffers();
 }
 
 
 
-
-
-
-
 void Engine::keyboardCallback(unsigned char key, int x, int y) {
-    float speed = 0.5f;
+    float speed = 0.5f; // Movement speed for observer and light
+
+    // Observer movement
     if (key == 'w') {
         observer->moveForward(speed);
     }
@@ -220,18 +375,10 @@ void Engine::keyboardCallback(unsigned char key, int x, int y) {
     else if (key == 'e') {
         observer->translate(glm::vec3(0.0f, -speed, 0.0f));
     }
-    else if (key == 'i') {
-        testWall->translate(glm::vec3(0.0f, 0.0f, -speed));
-    }
-    else if (key == 'k') {
-        testWall->translate(glm::vec3(0.0f, 0.0f, speed));
-    }
-    else if (key == 'j') {
-        testWall->translate(glm::vec3(-speed, 0.0f, 0.0f));
-    }
-    else if (key == 'l') {
-        testWall->translate(glm::vec3(speed, 0.0f, 0.0f));
-    }
+
+    
+
+    // Shading modes
     else if (key == 27) { // ESC
         exit(0);
     }
@@ -245,6 +392,8 @@ void Engine::keyboardCallback(unsigned char key, int x, int y) {
         glShadeModel(shadingMode);
         std::cout << "Gouraud Shading" << std::endl;
     }
+
+    // Spawn a cube in front of the observer
     else if (key == 'b') {
         glm::vec3 point = observer->getPosition();
         float cubeColor[] = { 0.5f, 0.5f, 0.5f };
@@ -253,9 +402,9 @@ void Engine::keyboardCallback(unsigned char key, int x, int y) {
 
         cube->translate(direction);
         cubes.push_back(cube);
-
     }
-
+    std::cout << glm::to_string(observer->getPosition()) << std::endl;
+    // Trigger redraw
     glutPostRedisplay();
 }
 
@@ -304,10 +453,11 @@ void Engine::timerCallback(int value) {
     }
 
 
-
+   // lightPos.x = 5.0f * sin(value);
+    //lightPos.z = 5.0f * cos(value);
 
     for (Cube* cube : cubes) {
-       // cube->translate(glm::vec3(1.0f, 0.0f, 0.0f));
+       //cube->translate(glm::vec3(0.0f, 0.0f, 0.0f));
         //cube->rotate(1, glm::vec3(1.0f, 0.0f, 0.0f));
     }
     

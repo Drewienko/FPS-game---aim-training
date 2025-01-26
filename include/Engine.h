@@ -31,8 +31,8 @@ public:
     static int windowHeight;
     static Observer* observer;
 private:
+    void initializeLights();
     void initSettings();
-    void initShadowMapping();
     static void displayCallback();
     static void keyboardCallback(unsigned char key, int x, int y);
     static void reshapeCallback(int w, int h);

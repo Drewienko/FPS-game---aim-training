@@ -1,5 +1,5 @@
 #include "Cube.h"
-#include "PrimitiveRenderer.h"
+
 
 Cube::Cube(float size, float x, float y, float z, const float* color) {
     vertices = {

@@ -5,6 +5,7 @@
 #include <array>
 #include "DrawableObject.h"
 #include "TransformableObject.h"
+#include "PrimitiveRenderer.h"
 
 class Cube : public DrawableObject, public TransformableObject {
 public:
