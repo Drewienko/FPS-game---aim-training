@@ -2,6 +2,9 @@
 
 Observer::Observer(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up)
     : position(position), target(target), up(up) {
+    glm::vec3 direction = glm::normalize(target - position);
+    pitch = glm::degrees(asin(direction.y)); // Vertical angle
+    yaw = glm::degrees(atan2(direction.z, direction.x)); // Horizontal angle
 }
 
 glm::mat4 Observer::getViewMatrix() const {
@@ -54,4 +57,31 @@ void Observer::moveRight(float distance) {
     glm::vec3 forward = glm::normalize(target - position);
     glm::vec3 right = glm::normalize(glm::cross(forward, up));
     this->translate(right * distance);
+}
+
+float Observer::getPitch() const {
+    return pitch;
+}
+
+float Observer::getYaw() const {
+    return yaw;
+}
+
+void Observer::setPitch(float newPitch) {
+    pitch = glm::clamp(newPitch, -89.0f, 89.0f); // Clamp to avoid flipping
+    updateTarget();
+}
+
+void Observer::setYaw(float newYaw) {
+    yaw = glm::mod(newYaw, 360.0f); // Keep yaw within [0, 360)
+    updateTarget();
+}
+
+void Observer::updateTarget() {
+    glm::vec3 direction;
+    direction.x = cos(glm::radians(pitch)) * cos(glm::radians(yaw));
+    direction.y = sin(glm::radians(pitch));
+    direction.z = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
+
+    target = position + glm::normalize(direction);
 }

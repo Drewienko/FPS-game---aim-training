@@ -126,25 +126,7 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
     walls.push_back(angledWall);
 
 
-    cubes.clear();
-    walls.clear();
-
-   // GLuint wallTexture = BitmapHandler::loadBitmapFromFile("textures/wall.jpg");
-    GLuint cubeTexture = BitmapHandler::loadBitmapFromFile("textures/wood.jpg");
-
-    // Create a cube in front of the wall
-    Cube* cube = new Cube(1.0f, 0.0f, 0.5f, -2.0f, glm::value_ptr(glm::vec3(0.5f, 0.5f, 0.5f)));
-    cube->setTextureForSide(0, cubeTexture);
-    cube->setTextureForSide(1, cubeTexture);
-    cube->setTextureForSide(2, cubeTexture);
-    cube->setTextureForSide(3, cubeTexture);
-    cube->setTextureForSide(4, cubeTexture);
-    cube->setTextureForSide(5, cubeTexture);
-    cubes.push_back(cube);
-
-    // Create a wall behind the cube
-    Wall* wall = new Wall(10.0f, 5.0f, 0.0f, 0.0f, -5.0f, wallTexture);
-    walls.push_back(wall);
+    
 
     glutDisplayFunc(displayCallback);
     glutKeyboardFunc(keyboardCallback);
@@ -400,9 +382,7 @@ void Engine::keyboardCallback(unsigned char key, int x, int y) {
         exit(0);
     }
     else if (key == 'f' || key == 'F') {
-        shadingMode = GL_FLAT;
-        glShadeModel(shadingMode);
-        std::cout << "Flat Shading" << std::endl;
+        cubes.pop_back();
     }
     else if (key == 'g' || key == 'G') {
         shadingMode = GL_SMOOTH;
@@ -445,16 +425,26 @@ void Engine::mouseMotionCallback(int x, int y) {
         return;
     }
 
-    int deltaX = x - lastMouseX;
-    int deltaY = y - lastMouseY;
-    glm::vec3 point = observer->getPosition();
-    observer->translate(-point);
-    observer->rotate(deltaX * 0.1f, glm::vec3(0.0f, 1.0f, 0.0f));
-    observer->rotate(deltaY * 0.1f, glm::vec3(1.0f, 0.0f, 0.0f));
-    observer->translate(point);
+    // Sensitivity for mouse movement
+    const float sensitivity = 0.05f;
+
+    // Calculate mouse deltas
+    float deltaX = static_cast<float>(x - lastMouseX);
+    float deltaY = static_cast<float>(y - lastMouseY);
+
+    // Update yaw and pitch
+    float newYaw = observer->getYaw() + deltaX * sensitivity;
+    float newPitch = observer->getPitch() + deltaY * sensitivity;
+
+    // Apply changes
+    observer->setYaw(newYaw);
+    observer->setPitch(newPitch);
+
+    // Update last mouse position
     lastMouseX = x;
     lastMouseY = y;
 
+    // Request a redraw
     glutPostRedisplay();
 }
 

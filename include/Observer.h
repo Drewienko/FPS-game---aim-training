@@ -24,10 +24,20 @@ public:
 
     void moveRight(float distance);
 
+    float getPitch() const;
+    float getYaw() const;
+    void setPitch(float newPitch);
+    void setYaw(float newYaw);
+
+    void updateTarget(); // Recalculate target based on pitch and yaw
+
 private:
     glm::vec3 position;
     glm::vec3 target;
     glm::vec3 up;
+
+    float pitch; // Vertical rotation in degrees
+    float yaw;   // Horizontal rotation in degrees
 };
 
 #endif
