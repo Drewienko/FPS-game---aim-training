@@ -45,7 +45,7 @@ GLuint texture = 0;
 
 Engine::Engine(int argc, char** argv, int width, int height, const char* title) {
     glutInit(&argc, argv);
-    glutInitContextVersion(4, 4); // Request OpenGL 4.6
+    glutInitContextVersion(4, 3); // Request OpenGL 4.6
     glutInitContextProfile(GLUT_CORE_PROFILE); // Force core profile
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
     glutInitWindowSize(width, height);
