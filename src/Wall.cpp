@@ -1,4 +1,5 @@
 #include "Wall.h"
+#include <iostream>
 
 Wall::Wall(float width, float height, float x, float y, float z, GLuint texture) {
     vertices = {
@@ -21,6 +22,7 @@ Wall::Wall(float width, float height, float x, float y, float z, GLuint texture)
 }
 
 void Wall::setupBuffers() {
+    
     // Generate VAO, VBO, and EBO
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
@@ -44,6 +46,8 @@ void Wall::setupBuffers() {
     glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
+
+    std::cout << "VAO: " << vao << ", VBO: " << vbo << ", EBO: " << ebo << std::endl;
 }
 
 void Wall::draw(GLuint shaderProgram, const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) {

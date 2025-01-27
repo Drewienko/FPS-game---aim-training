@@ -1,4 +1,5 @@
 #include "Cube.h"
+#include <iostream>
 
 
 Cube::Cube(float size, float x, float y, float z, const float* color) {
@@ -65,6 +66,7 @@ Cube::Cube(float size, float x, float y, float z, const float* color) {
 }
 
 void Cube::setupBuffers() {
+    
     // Generate VAO, VBO, and EBO
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
@@ -88,6 +90,7 @@ void Cube::setupBuffers() {
     glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
+    std::cout << "VAO: " << vao << ", VBO: " << vbo << ", EBO: " << ebo << std::endl;
 }
 
 void Cube::draw(GLuint shaderProgram, const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) {
