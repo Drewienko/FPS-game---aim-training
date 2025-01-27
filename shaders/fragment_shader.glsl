@@ -1,4 +1,4 @@
-#version 460 core
+#version 440 core
 
 in vec3 FragPos;
 in vec3 Normal;
@@ -19,7 +19,7 @@ uniform sampler2D texture1;
 uniform float shadowStrength = 1.0;
 uniform bool debugShadows = false;
 uniform int debugMode = 0;
-uniform float bias = 0.01;
+uniform float bias = 0.005;
 out vec4 FragColor;
 
 float ShadowCalculation(vec4 fragPosLightSpace, sampler2D shadowMap, out float closestDepth, out vec3 projCoords) {
@@ -32,7 +32,6 @@ float ShadowCalculation(vec4 fragPosLightSpace, sampler2D shadowMap, out float c
     }
 
     closestDepth = texture(shadowMap, projCoords.xy).r;
-
     float shadow = 0.0;
     vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
     for (int x = -1; x <= 1; ++x) {

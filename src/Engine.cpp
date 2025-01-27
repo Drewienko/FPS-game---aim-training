@@ -45,7 +45,7 @@ GLuint texture = 0;
 
 Engine::Engine(int argc, char** argv, int width, int height, const char* title) {
     glutInit(&argc, argv);
-    glutInitContextVersion(4, 6); // Request OpenGL 4.6
+    glutInitContextVersion(4, 4); // Request OpenGL 4.6
     glutInitContextProfile(GLUT_CORE_PROFILE); // Force core profile
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
     glutInitWindowSize(width, height);
@@ -332,7 +332,7 @@ void Engine::displayCallback() {
 
     
 
-    //Uncomment to visualize shadow map
+    
      //renderShadowMapDebug(lights[0].shadowMap);
 
     glutSwapBuffers();
@@ -433,7 +433,7 @@ void Engine::mouseMotionCallback(int x, int y) {
     float deltaY = static_cast<float>(y - lastMouseY);
 
     // Update yaw and pitch
-    float newYaw = observer->getYaw() + deltaX * sensitivity;
+    float newYaw = observer->getYaw() - deltaX * sensitivity;
     float newPitch = observer->getPitch() + deltaY * sensitivity;
 
     // Apply changes
