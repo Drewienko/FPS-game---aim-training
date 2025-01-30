@@ -42,7 +42,6 @@ set(SOURCE_FILES
     Cube
     Engine
     Observer
-    PrimitiveRenderer
     Wall
     Shader
 )
@@ -116,7 +115,3 @@ add_custom_command(
     ${CMAKE_SOURCE_DIR}/lib/glew32.dll
     $<TARGET_FILE_DIR:${PROJECT_NAME}>/
 )
-
-
-
-

@@ -6,15 +6,13 @@
 GLuint BitmapHandler::loadBitmapFromFile(const std::string& filename) {
     int width, height, channels;
 
-    // Load image data using stb_image
-    stbi_set_flip_vertically_on_load(true); // Flip the image vertically
+    stbi_set_flip_vertically_on_load(true); 
     unsigned char* data = stbi_load(filename.c_str(), &width, &height, &channels, 0);
     if (!data) {
         std::cerr << "Failed to load texture: " << filename << std::endl;
         return 0;
     }
 
-    // Determine image format
     GLenum format = GL_RGB;
     if (channels == 4) {
         format = GL_RGBA;
@@ -23,7 +21,6 @@ GLuint BitmapHandler::loadBitmapFromFile(const std::string& filename) {
         format = GL_RED;
     }
 
-    // Generate OpenGL texture
     GLuint textureID;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
@@ -35,12 +32,10 @@ GLuint BitmapHandler::loadBitmapFromFile(const std::string& filename) {
 
     glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 
-    // Set texture parameters
     
 
-    glGenerateMipmap(GL_TEXTURE_2D); // Generate mipmaps
+    glGenerateMipmap(GL_TEXTURE_2D); 
 
-    // Clean up
     stbi_image_free(data);
     glBindTexture(GL_TEXTURE_2D, 0);
 

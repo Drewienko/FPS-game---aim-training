@@ -3,8 +3,6 @@
 
 Wall::Wall(float width, float height, float x, float y, float z, GLuint texture) {
     vertices = {
-        // Positions          // Texture Coords   // Normals
-        // Front face (wall)
         x,          y,          z,   0.0f, 0.0f,   0.0f,  0.0f,  1.0f,
         x + width,  y,          z,   1.0f, 0.0f,   0.0f,  0.0f,  1.0f,
         x + width,  y + height, z,   1.0f, 1.0f,   0.0f,  0.0f,  1.0f,
@@ -23,7 +21,6 @@ Wall::Wall(float width, float height, float x, float y, float z, GLuint texture)
 
 void Wall::setupBuffers() {
     
-    // Generate VAO, VBO, and EBO
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
     glGenBuffers(1, &ebo);
@@ -36,13 +33,13 @@ void Wall::setupBuffers() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // Position
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))); // Texture coordinates
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))); 
     glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float))); // Normals
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
@@ -52,19 +49,16 @@ void Wall::setupBuffers() {
 void Wall::draw(GLuint shaderProgram, const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) {
     glUseProgram(shaderProgram);
 
-    // Pass matrices to shader
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-    // Bind texture
     if (textureID != 0) {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID);
         glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0);
     }
 
-    // Render the wall
     glBindVertexArray(vao);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -73,13 +67,12 @@ void Wall::draw(GLuint shaderProgram, const glm::mat4& model, const glm::mat4& v
 }
 
 void Wall::translate(const glm::vec3& direction) {
-    for (size_t i = 0; i < vertices.size(); i += 8) { // Stride of 8
-        vertices[i] += direction.x;     // Update X
-        vertices[i + 1] += direction.y; // Update Y
-        vertices[i + 2] += direction.z; // Update Z
+    for (size_t i = 0; i < vertices.size(); i += 8) {
+        vertices[i] += direction.x; 
+        vertices[i + 1] += direction.y; 
+        vertices[i + 2] += direction.z;
     }
 
-    // Update GPU buffer
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(float), vertices.data());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -94,7 +87,6 @@ void Wall::rotate(float angle, const glm::vec3& axis) {
         vertices[i + 1] = vertex.y;
         vertices[i + 2] = vertex.z;
 
-        // Update normal
         glm::vec4 normal(vertices[i + 5], vertices[i + 6], vertices[i + 7], 0.0f);
         normal = rotationMatrix * normal;
         vertices[i + 5] = normal.x;
@@ -102,7 +94,6 @@ void Wall::rotate(float angle, const glm::vec3& axis) {
         vertices[i + 7] = normal.z;
     }
 
-    // Update GPU buffer
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(float), vertices.data());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -112,7 +103,6 @@ void Wall::scale(float sx, float sy) {
     glm::vec3 center(0.0f);
     size_t vertexCount = vertices.size() / 8;
 
-    // Calculate center of the wall
     for (size_t i = 0; i < vertices.size(); i += 8) {
         center.x += vertices[i];
         center.y += vertices[i + 1];
@@ -120,7 +110,6 @@ void Wall::scale(float sx, float sy) {
     }
     center /= static_cast<float>(vertexCount);
 
-    // Scale positions and normalize normals
     for (size_t i = 0; i < vertices.size(); i += 8) {
         vertices[i] = center.x + (vertices[i] - center.x) * sx;
         vertices[i + 1] = center.y + (vertices[i + 1] - center.y) * sy;
@@ -132,7 +121,6 @@ void Wall::scale(float sx, float sy) {
         vertices[i + 7] = normal.z;
     }
 
-    // Update GPU buffer
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(float), vertices.data());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -145,15 +133,13 @@ void Wall::rotatePoint(float angle, const glm::vec3& axis, const glm::vec3& poin
 }
 
 void Wall::rotateAround(float angle, const glm::vec3& axis) {
-    // Calculate the center point of the wall
     glm::vec3 center(0.0f, 0.0f, 0.0f);
-    for (size_t i = 0; i < vertices.size(); i += 8) { // Stride of 8 (vertex data includes normals/texcoords)
-        center.x += vertices[i];     // Sum X
-        center.y += vertices[i + 1]; // Sum Y
-        center.z += vertices[i + 2]; // Sum Z
+    for (size_t i = 0; i < vertices.size(); i += 8) {
+        center.x += vertices[i]; 
+        center.y += vertices[i + 1];
+        center.z += vertices[i + 2];
     }
-    center /= static_cast<float>(vertices.size() / 8); // Average to find center
+    center /= static_cast<float>(vertices.size() / 8);
 
-    // Translate the wall so the center is at the origin
     rotatePoint(angle,axis,center);
 }

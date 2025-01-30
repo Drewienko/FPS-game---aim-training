@@ -13,7 +13,6 @@ Observer* Engine::observer = nullptr;
 static bool isMousePressed = false;
 static int lastMouseX = -1;
 static int lastMouseY = -1;
-static GLenum shadingMode = GL_SMOOTH;
 static int debugmode;
 Observer* observer = nullptr;
 Cube* texturedCube = nullptr;
@@ -177,9 +176,9 @@ void Engine::displayCallback() {
         glUniform3fv(glGetUniformLocation(mainShader->getProgramID(), lightColorUniform.c_str()), 1, glm::value_ptr(lights[i].color));
         glUniformMatrix4fv(glGetUniformLocation(mainShader->getProgramID(), lightSpaceMatrixUniform.c_str()), 1, GL_FALSE, glm::value_ptr(lights[i].lightSpaceMatrix));
 
-        glActiveTexture(GL_TEXTURE6 + i);
+        glActiveTexture(GL_TEXTURE2 + i);
         glBindTexture(GL_TEXTURE_2D, lights[i].shadowMap);
-        glUniform1i(glGetUniformLocation(mainShader->getProgramID(), shadowMapUniform.c_str()),6+ i);
+        glUniform1i(glGetUniformLocation(mainShader->getProgramID(), shadowMapUniform.c_str()),2+ i);
     }
     for (Wall* wall : walls) {
         wall->draw(mainShader->getProgramID(), glm::mat4(1.0f), view, projection);
@@ -320,7 +319,8 @@ void Engine::setup()
 void Engine::keyboard(unsigned char key, int x, int y)
 {
 if (key == 'f' || key == 'F') {
-        cubes.pop_back();
+        if(!cubes.empty())
+            cubes.pop_back();
     }
     else if (key == 'b') {
         glm::vec3 point = observer->getPosition();
