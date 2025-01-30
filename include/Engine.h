@@ -16,16 +16,27 @@
 #include "Cube.h"
 #include "BitMapHandler.h"
 
+
+struct Light {
+    glm::vec3 position;
+    glm::vec3 color;
+    GLuint shadowFBO;
+    GLuint shadowMap;
+    glm::mat4 lightSpaceMatrix;
+};
+
 class Engine {
 public:
     Engine(int argc, char** argv, int width, int height, const char* title);
     ~Engine();
 
     void start();
-    static void setClearColor(float r, float g, float b, float a = 1.0f);
 
+    static void render(Shader* shader, glm::mat4 view, glm::mat4 projection);
+    static void setup();
+    static void update();
+    static void keyboard(unsigned char key, int x, int y);
 
-    
     static bool isPerspective;
     static int windowWidth;
     static int windowHeight;
@@ -34,6 +45,7 @@ private:
     void initializeLights();
     void initSettings();
     static void displayCallback();
+    
     static void keyboardCallback(unsigned char key, int x, int y);
     static void reshapeCallback(int w, int h);
     static void mouseCallback(int button, int state, int x, int y);

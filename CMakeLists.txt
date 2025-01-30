@@ -77,8 +77,13 @@ set(SHADERS
     ${CMAKE_SOURCE_DIR}/shaders/fragment_shader.glsl
     ${CMAKE_SOURCE_DIR}/shaders/depth_fragment_shader.glsl
     ${CMAKE_SOURCE_DIR}/shaders/depth_vertex_shader.glsl
-    ${CMAKE_SOURCE_DIR}/shaders/debug_fragment_shader.glsl
-    ${CMAKE_SOURCE_DIR}/shaders/debug_vertex_shader.glsl
+)
+
+TARGET_LINK_LIBRARIES(
+    ${PROJECT_NAME} PRIVATE
+    freeglut
+    glm::glm
+    "${CMAKE_SOURCE_DIR}/lib/glew32.lib"
 )
 
 
@@ -96,21 +101,20 @@ add_custom_command(
     $<TARGET_FILE_DIR:${PROJECT_NAME}>/textures
 )
 
-# Add an install rule for shaders
-install(FILES ${SHADERS} DESTINATION shaders)
 
-TARGET_LINK_LIBRARIES(
-    ${PROJECT_NAME} PRIVATE
-    freeglut
-    glm::glm
-    "${CMAKE_SOURCE_DIR}/lib/glew32.lib"
-)
 
 add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
     ${freeglut_BINARY_DIR}/bin/freeglutd.dll
     $<TARGET_FILE_DIR:${PROJECT_NAME}>
+)
+
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+    ${CMAKE_SOURCE_DIR}/lib/glew32.dll
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>/
 )
 
 

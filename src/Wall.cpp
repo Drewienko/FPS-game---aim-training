@@ -47,7 +47,6 @@ void Wall::setupBuffers() {
 
     glBindVertexArray(0);
 
-    std::cout << "VAO: " << vao << ", VBO: " << vbo << ", EBO: " << ebo << std::endl;
 }
 
 void Wall::draw(GLuint shaderProgram, const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) {

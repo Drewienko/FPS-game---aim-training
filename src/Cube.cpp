@@ -90,7 +90,6 @@ void Cube::setupBuffers() {
     glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
-    std::cout << "VAO: " << vao << ", VBO: " << vbo << ", EBO: " << ebo << std::endl;
 }
 
 void Cube::draw(GLuint shaderProgram, const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) {
