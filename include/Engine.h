@@ -32,9 +32,7 @@ public:
 
     void start();
 
-    static void render(Shader* shader, glm::mat4 view, glm::mat4 projection);
     static void setup();
-    static void update();
     static void keyboard(unsigned char key, int x, int y);
 
     static bool isPerspective;

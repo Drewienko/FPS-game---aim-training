@@ -24,7 +24,8 @@ Shader* mainShader;
 Shader* depthShader;
 std::vector<Light> lights;
 
-GLuint texture = 0;
+GLuint wallTexture = 0;
+GLuint woodTexture = 0;
 
 Engine::Engine(int argc, char** argv, int width, int height, const char* title) {
     glutInit(&argc, argv);
@@ -48,6 +49,9 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
     initSettings();
 
     observer = new Observer(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+    wallTexture = BitmapHandler::loadBitmapFromFile("textures/wall.jpg");
+    woodTexture = BitmapHandler::loadBitmapFromFile("textures/wood.jpg");
 
     setup();
 
@@ -77,28 +81,37 @@ void Engine::initSettings() {
 
 void Engine::initializeLights() {
 
-    Light light;
-    light.position = glm::vec3(-5.0f, -5.0f, 5.0f);
-    light.color = glm::vec3(3.0f, 3.0f, 3.0f);
+    glm::vec3 lightPositions[] = {
+    glm::vec3(-5.0f, -5.0f, 5.0f),
+    glm::vec3(5.0f, -3.0f, -5.0f),
+    glm::vec3(0.0f, 15.0f, 0.0f)
+    };
 
-    glGenFramebuffers(1, &light.shadowFBO);
-    glGenTextures(1, &light.shadowMap);
-    glBindTexture(GL_TEXTURE_2D, light.shadowMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    for (int i = 0; i < lightPositions->length(); i++) {
+        Light light;
+        light.position = lightPositions[i];
+        light.color = glm::vec3(3.0f, 3.0f, 3.0f);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, light.shadowFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, light.shadowMap, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glGenFramebuffers(1, &light.shadowFBO);
+        glGenTextures(1, &light.shadowMap);
+        glBindTexture(GL_TEXTURE_2D, light.shadowMap);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-    lights.push_back(light);
+        float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, light.shadowFBO);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, light.shadowMap, 0);
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        lights.push_back(light);
+    }
 }
 
 
@@ -122,7 +135,18 @@ void Engine::displayCallback() {
         lights[i].lightSpaceMatrix = lightProjection * lightView;
 
         glUniformMatrix4fv(glGetUniformLocation(depthShader->getProgramID(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lights[i].lightSpaceMatrix));
-        render(depthShader, glm::mat4(1.0f), glm::mat4(1.0f));
+        glDisable(GL_CULL_FACE);
+        for (Wall* wall : walls) {
+            glm::mat4 model = glm::mat4(1.0f);
+            wall->draw(depthShader->getProgramID(), model, glm::mat4(1.0f), glm::mat4(1.0f));
+        }
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+
+        for (Cube* cube : cubes) {
+            glm::mat4 model = glm::mat4(1.0f);
+            cube->draw(depthShader->getProgramID(), model, glm::mat4(1.0f), glm::mat4(1.0f));
+        }
 
         
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -130,6 +154,7 @@ void Engine::displayCallback() {
 
     glViewport(0, 0, windowWidth, windowHeight);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
     mainShader->use();
@@ -156,7 +181,13 @@ void Engine::displayCallback() {
         glBindTexture(GL_TEXTURE_2D, lights[i].shadowMap);
         glUniform1i(glGetUniformLocation(mainShader->getProgramID(), shadowMapUniform.c_str()),6+ i);
     }
-    render(mainShader, view, projection);
+    for (Wall* wall : walls) {
+        wall->draw(mainShader->getProgramID(), glm::mat4(1.0f), view, projection);
+    }
+
+    for (Cube* cube : cubes) {
+        cube->draw(mainShader->getProgramID(), glm::mat4(1.0f), view, projection);
+    }
 
     glutSwapBuffers();
 }
@@ -265,66 +296,18 @@ void Engine::start() {
     glutMainLoop();
 }
 
-void Engine::render(Shader * shader, glm::mat4 view,glm::mat4 projection)
-{
-    for (Wall* wall : walls) {
-        wall->draw(mainShader->getProgramID(), glm::mat4(1.0f), view, projection);
-    }
-
-    for (Cube* cube : cubes) {
-        cube->draw(mainShader->getProgramID(), glm::mat4(1.0f), view, projection);
-    }
-}
 
 void Engine::setup()
 {
-    GLuint wallTexture = BitmapHandler::loadBitmapFromFile("textures/wall.jpg");
-    GLuint woodTexture = BitmapHandler::loadBitmapFromFile("textures/wood.jpg");
 
-    // Room dimensions
     float roomWidth = 15.0f;
-    float roomHeight = 10.0f;
-    float roomDepth = 15.0f;
+    float roomHeight = 16.0f;
+    float roomDepth = 14.0f;
 
-    // Cube properties
-    float cubeSize = 1.0f;
-    float spacing = 3.0f;
 
-    // Scatter cubes on the floor
-    for (int i = -2; i <= 2; ++i) {  // X-axis
-        for (int j = -2; j <= 2; ++j) {  // Z-axis
-            float x = i * spacing;
-            float y = -roomHeight / 2.0f + cubeSize / 2.0f;
-            float z = j * spacing;
-
-            Cube* scatteredCube = new Cube(cubeSize, x, y, z, glm::value_ptr(glm::vec3(0.7f, 0.3f, 0.3f)));
-            scatteredCube->setTextureForSide(0, woodTexture);
-            scatteredCube->setTextureForSide(1, woodTexture);
-            scatteredCube->setTextureForSide(2, woodTexture);
-            scatteredCube->setTextureForSide(3, woodTexture);
-            scatteredCube->setTextureForSide(4, woodTexture);  // Top
-            scatteredCube->setTextureForSide(5, woodTexture);
-            cubes.push_back(scatteredCube);
-        }
-    }
-
-    // Floating cube
-    Cube* elevatedCube = new Cube(cubeSize, 0.0f, -roomHeight / 2.0f + cubeSize * 5.0f, 0.0f, glm::value_ptr(glm::vec3(0.3f, 0.6f, 0.9f)));
-    elevatedCube->setTextureForSide(0, woodTexture);
-    elevatedCube->setTextureForSide(1, woodTexture);
-    elevatedCube->setTextureForSide(2, woodTexture);
-    elevatedCube->setTextureForSide(3, woodTexture);
-    elevatedCube->setTextureForSide(4, woodTexture); 
-    elevatedCube->setTextureForSide(5, woodTexture);
-    cubes.push_back(elevatedCube);
-
-    
-
-    // Vertical center wall
     Wall* centerWall = new Wall(roomDepth, roomHeight, 0.0f, 0.0f, -2.0f, wallTexture);
     walls.push_back(centerWall);
 
-    // Angled walls
     Wall* angledWall1 = new Wall(roomDepth, roomHeight, -5.0f, 0.0f, -3.0f, wallTexture);
     angledWall1->rotateAround(30.0f, glm::vec3(0.0f, 1.0f, 0.0f));
     walls.push_back(angledWall1);
@@ -346,6 +329,12 @@ if (key == 'f' || key == 'F') {
         glm::vec3 direction = 3.0f * glm::normalize(observer->getTarget() - point);
 
         cube->translate(direction);
+        cube->setTextureForSide(0, woodTexture);
+        cube->setTextureForSide(1, woodTexture);
+        cube->setTextureForSide(2, woodTexture);
+        cube->setTextureForSide(3, woodTexture);
+        cube->setTextureForSide(4, woodTexture);
+        cube->setTextureForSide(5, woodTexture);
         cubes.push_back(cube);
         }
 }

@@ -15,16 +15,14 @@ uniform int numLights;
 uniform Light lights[10];
 uniform vec3 viewPos;
 uniform sampler2D texture1;
-uniform float shadowStrength = 1.0;
+uniform float shadowStrength = 1.5;
 uniform int debugMode = 0;
 out vec4 FragColor;
 
-// Compute adaptive bias based on surface slope
 float computeBias(vec3 normal, vec3 lightDir) {
     return max(0.005 * (1.0 - dot(normal, lightDir)), 0.0005);
 }
 
-// Shadow calculation with adaptive bias
 float ShadowCalculation(vec4 fragPosLight, sampler2D shadowMap, vec3 normal, vec3 lightDir) {
     vec3 projCoords = fragPosLight.xyz / fragPosLight.w;
     projCoords = projCoords * 0.5 + 0.5; 
@@ -49,7 +47,7 @@ void main() {
         float distance = length(lights[i].position - FragPos);
         float attenuation = 1.0 / (1.0 + 0.05 * distance + 0.02 * (distance * distance));
 
-        vec3 ambient = 0.4 * lights[i].color * color;
+        vec3 ambient = 0.2 * lights[i].color * color;
         float diff = max(dot(normal, lightDir), 0.0);
         vec3 diffuse = diff * lights[i].color * color;
 
@@ -60,8 +58,7 @@ void main() {
         float shadow = ShadowCalculation(FragPosLightSpace[i], lights[i].shadowMap, normal, lightDir);
         shadow = clamp(shadow, 0.0, 1.0);
 
-        if (debugMode == 1) { FragColor = vec4(vec3(shadow), 1.0); return; }
-        if (debugMode == 2) { FragColor = vec4(vec3(computeBias(normal, lightDir)), 1.0); return; }
+        if (debugMode == i+1) { FragColor = vec4(vec3(shadow), 1.0); return; }
 
         result += (ambient + (1.0 - shadow * shadowStrength) * (diffuse + specular)) * attenuation;
     }
