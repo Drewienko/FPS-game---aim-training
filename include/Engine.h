@@ -87,10 +87,6 @@ public:
      */
     static int windowHeight;
 
-    /**
-     * @brief Wskaźnik na obiekt `Observer`, reprezentujący kamerę.
-     */
-    static Observer* observer;
 
 private:
     /**

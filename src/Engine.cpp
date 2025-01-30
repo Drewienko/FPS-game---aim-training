@@ -22,6 +22,7 @@ std::vector<Light> lights;
 
 GLuint wallTexture = 0;
 GLuint woodTexture = 0;
+Cube* lightCube = nullptr;
 
 Engine::Engine(int argc, char** argv, int width, int height, const char* title) {
     glutInit(&argc, argv);
@@ -78,9 +79,9 @@ void Engine::initSettings() {
 void Engine::initializeLights() {
 
     glm::vec3 lightPositions[] = {
-    glm::vec3(-5.0f, -5.0f, 5.0f),
-    glm::vec3(5.0f, -3.0f, -5.0f),
-    glm::vec3(0.0f, 15.0f, 0.0f)
+    glm::vec3(-5.0f, -5.0f, 7.0f),
+    glm::vec3(5.0f, -5.0f, 7.0f),
+    glm::vec3(0.0f, 20.0f, 0.0f)
     };
 
     for (int i = 0; i < lightPositions->length(); i++) {
@@ -108,6 +109,13 @@ void Engine::initializeLights() {
 
         lights.push_back(light);
     }
+    float color[] = { 0.2,0.8,0.8 };
+    lightCube = new Cube(0.5, 0.0, 0.0, 0.0, color);
+    GLuint texture = BitmapHandler::createBitmap(1024, 1024, 255*color[0], 255 * color[1], 255 * color[2]);
+    for (int i = 0; i < 6; ++i) {
+        lightCube->setTextureForSide(i, texture);
+    }
+
 }
 
 
@@ -172,7 +180,7 @@ void Engine::displayCallback() {
         glUniform3fv(glGetUniformLocation(mainShader->getProgramID(), lightPosUniform.c_str()), 1, glm::value_ptr(lights[i].position));
         glUniform3fv(glGetUniformLocation(mainShader->getProgramID(), lightColorUniform.c_str()), 1, glm::value_ptr(lights[i].color));
         glUniformMatrix4fv(glGetUniformLocation(mainShader->getProgramID(), lightSpaceMatrixUniform.c_str()), 1, GL_FALSE, glm::value_ptr(lights[i].lightSpaceMatrix));
-
+       
         glActiveTexture(GL_TEXTURE2 + i);
         glBindTexture(GL_TEXTURE_2D, lights[i].shadowMap);
         glUniform1i(glGetUniformLocation(mainShader->getProgramID(), shadowMapUniform.c_str()),2+ i);
@@ -183,6 +191,13 @@ void Engine::displayCallback() {
 
     for (Cube* cube : cubes) {
         cube->draw(mainShader->getProgramID(), glm::mat4(1.0f), view, projection);
+    }
+
+    for (size_t i = 0; i < lights.size(); ++i) {
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, lights[i].position);
+        glUniformMatrix4fv(glGetUniformLocation(mainShader->getProgramID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
+        lightCube->draw(mainShader->getProgramID(), model, view, projection);
     }
 
     glutSwapBuffers();
