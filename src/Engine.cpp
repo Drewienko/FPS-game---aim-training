@@ -126,7 +126,7 @@ void Engine::displayCallback() {
     glEnable(GL_CULL_FACE);
 
     glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-    for (size_t i = 0; i < lights.size(); ++i) {
+    for (size_t i = 0; i < lights.size(); i++) {
         glBindFramebuffer(GL_FRAMEBUFFER, lights[i].shadowFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -193,7 +193,7 @@ void Engine::displayCallback() {
         cube->draw(mainShader->getProgramID(), glm::mat4(1.0f), view, projection);
     }
 
-    for (size_t i = 0; i < lights.size(); ++i) {
+    for (size_t i = 0; i < lights.size(); i++) {
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, lights[i].position);
         glUniformMatrix4fv(glGetUniformLocation(mainShader->getProgramID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
