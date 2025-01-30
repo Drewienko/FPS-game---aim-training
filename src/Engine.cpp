@@ -9,16 +9,13 @@ const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
 
 int Engine::windowWidth = 800;
 int Engine::windowHeight = 600;
-Observer* Engine::observer = nullptr;
 static bool isMousePressed = false;
 static int lastMouseX = -1;
 static int lastMouseY = -1;
 static int debugmode;
 Observer* observer = nullptr;
-Cube* texturedCube = nullptr;
 std::vector<Cube*> cubes;
 std::vector<Wall*> walls;
-float rotationAngle = 0.0f;
 Shader* mainShader;
 Shader* depthShader;
 std::vector<Light> lights;
@@ -196,38 +193,42 @@ void Engine::displayCallback() {
 
 void Engine::keyboardCallback(unsigned char key, int x, int y) {
     float speed = 0.5f; 
-    if (key == 'w') {
+    switch (key) {
+    case 'w':
         observer->moveForward(speed);
-    }
-    else if (key == 's') {
+        break;
+    case 's':
         observer->moveForward(-speed);
-    }
-    else if (key == 'a') {
+        break;
+    case 'a':
         observer->moveRight(-speed);
-    }
-    else if (key == 'd') {
+        break;
+    case 'd':
         observer->moveRight(speed);
-    }
-    else if (key == 'q') {
+        break;
+    case 'q':
         observer->translate(glm::vec3(0.0f, speed, 0.0f));
-    }
-    else if (key == 'e') {
+        break;
+    case 'e':
         observer->translate(glm::vec3(0.0f, -speed, 0.0f));
-    }
-    if (key == '1') {
-        debugmode =0;
-    }
-    else if (key == '2') {
+        break;
+    case '1':
+        debugmode = 0;
+        break;
+    case '2':
         debugmode = 1;
-    }
-    else if (key == '3') {
+        break;
+    case '3':
         debugmode = 2;
-    }
-    else if (key == '4') {
+        break;
+    case '4':
         debugmode = 3;
-    }
-    else if (key == 27) { // ESC
+        break;
+    case 27: // ESC
         exit(0);
+        break;
+    default:
+        break;
     }
 
     keyboard(key, x, y);
@@ -318,25 +319,33 @@ void Engine::setup()
 
 void Engine::keyboard(unsigned char key, int x, int y)
 {
-if (key == 'f' || key == 'F') {
-        if(!cubes.empty())
+    switch (key) {
+    case 'f':
+    case 'F':
+        if (!cubes.empty()) {
             cubes.pop_back();
-    }
-    else if (key == 'b') {
+        }
+        break;
+
+    case 'b': {
         glm::vec3 point = observer->getPosition();
         float cubeColor[] = { 0.5f, 0.5f, 0.5f };
         Cube* cube = new Cube(1.0, point.x, point.y, point.z, cubeColor);
         glm::vec3 direction = 3.0f * glm::normalize(observer->getTarget() - point);
 
         cube->translate(direction);
-        cube->setTextureForSide(0, woodTexture);
-        cube->setTextureForSide(1, woodTexture);
-        cube->setTextureForSide(2, woodTexture);
-        cube->setTextureForSide(3, woodTexture);
-        cube->setTextureForSide(4, woodTexture);
-        cube->setTextureForSide(5, woodTexture);
-        cubes.push_back(cube);
+
+        for (int i = 0; i < 6; ++i) {
+            cube->setTextureForSide(i, woodTexture);
         }
+
+        cubes.push_back(cube);
+        break;
+    }
+
+    default:
+        break;
+    }
 }
 
 
@@ -345,6 +354,17 @@ Engine::~Engine() {
     for (Cube* cube : cubes) {
         delete cube;
     }
+
+    for (Wall* wall : walls) {
+        delete wall;
+    }
+    BitmapHandler::deleteBitmap(wallTexture);
+    BitmapHandler::deleteBitmap(wallTexture);
+
+    for (Light light : lights) {
+        BitmapHandler::deleteBitmap(light.shadowFBO);
+    }
+    
 
     delete mainShader;
     delete depthShader;
