@@ -5,16 +5,18 @@
 #include <array>
 #include "ShapeObject.h"
 
+#include <iostream>
+
 /**
  * @class Wall
  * @brief Klasa reprezentująca ścianę jako obiekt 3D.
  *
- * Klasa `Wall` dziedziczy po `DrawableObject` i `TransformableObject`,
+ * Klasa Wall dziedziczy po ShapeObject,
  * co umożliwia renderowanie oraz transformacje w przestrzeni 3D.
  * Obsługuje operacje takie jak translacja, rotacja, skalowanie oraz
  * przypisywanie tekstury.
  */
-class Wall : public DrawableObject, public TransformableObject {
+class Wall : public ShapeObject {
 public:
     /**
      * @brief Identyfikator VAO (Vertex Array Object) OpenGL.
@@ -36,9 +38,9 @@ public:
      *
      * @param width Szerokość ściany.
      * @param height Wysokość ściany.
-     * @param x Współrzędna X pozycji środka ściany.
-     * @param y Współrzędna Y pozycji środka ściany.
-     * @param z Współrzędna Z pozycji środka ściany.
+     * @param x Współrzędna X lewego dolnego wierzchołka.
+     * @param y Współrzędna Y lewego dolnego wierzchołka.
+     * @param z Współrzędna Z lewego dolnego wierzchołka.
      * @param texture Identyfikator tekstury OpenGL przypisanej do ściany.
      */
     Wall(float width, float height, float x, float y, float z, GLuint texture);

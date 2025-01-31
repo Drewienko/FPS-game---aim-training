@@ -1,7 +1,4 @@
 #include "Engine.h"
-#include "BitmapHandler.h"
-#include "Cube.h"
-#include "Wall.h"
 
 
 const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
@@ -110,11 +107,8 @@ void Engine::initializeLights() {
         lights.push_back(light);
     }
     float color[] = { 0.2,0.8,0.8 };
-    lightCube = new Cube(0.5, 0.0, 0.0, 0.0, color);
     GLuint texture = BitmapHandler::createBitmap(1024, 1024, 255*color[0], 255 * color[1], 255 * color[2]);
-    for (int i = 0; i < 6; ++i) {
-        lightCube->setTextureForSide(i, texture);
-    }
+    lightCube = new Cube(0.5, 0.0, 0.0, 0.0, texture);
 
 }
 
@@ -286,7 +280,8 @@ void Engine::mouseMotionCallback(int x, int y) {
 }
 
 void Engine::reshapeCallback(int w, int h) {
-    glViewport(0, 0, w, h);
+    windowHeight = h;
+    windowWidth = w;
     updateProjectionMatrix();
 }
 
@@ -344,15 +339,10 @@ void Engine::keyboard(unsigned char key, int x, int y)
 
     case 'b': {
         glm::vec3 point = observer->getPosition();
-        float cubeColor[] = { 0.5f, 0.5f, 0.5f };
-        Cube* cube = new Cube(1.0, point.x, point.y, point.z, cubeColor);
+        Cube* cube = new Cube(1.0, point.x, point.y, point.z, woodTexture);
         glm::vec3 direction = 3.0f * glm::normalize(observer->getTarget() - point);
 
         cube->translate(direction);
-
-        for (int i = 0; i < 6; ++i) {
-            cube->setTextureForSide(i, woodTexture);
-        }
 
         cubes.push_back(cube);
         break;

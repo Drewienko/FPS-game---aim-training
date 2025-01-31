@@ -25,6 +25,7 @@ public:
      */
     virtual ~DrawableObject() = default;
 
+
     /**
      * @brief Rysuje obiekt przy użyciu podanego programu cieniującego i macierzy transformacji.
      *

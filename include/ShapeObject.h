@@ -8,18 +8,28 @@
  * @class ShapeObject
  * @brief Klasa bazowa dla obiektów, które mogą być zarówno rysowane, jak i transformowane.
  *
- * Klasa `ShapeObject` łączy funkcjonalność `DrawableObject` (renderowanie w OpenGL)
- * oraz `TransformableObject` (operacje translacji, rotacji i skalowania),
+ * Klasa ShapeObject łączy funkcjonalność DrawableObject (renderowanie w OpenGL)
+ * oraz TransformableObject (operacje translacji, rotacji i skalowania),
  * umożliwiając łatwe zarządzanie kształtami w scenie 3D.
  */
 class ShapeObject : public DrawableObject, public TransformableObject {
 public:
+
+
     /**
      * @brief Wirtualny destruktor klasy ShapeObject.
      *
      * Zapewnia poprawne zarządzanie pamięcią w klasach pochodnych.
      */
     virtual ~ShapeObject() = default;
+
+    /**
+     * @brief Konfiguruje bufory wierzchołków i indeksów dla OpenGL.
+     *
+     * Metoda przygotowuje dane wierzchołkowe, współrzędne tekstur oraz indeksy
+     * dla poprawnego renderowania kształtu.
+     */
+    virtual void setupBuffers() = 0;
 
     /**
      * @brief Rysuje obiekt przy użyciu podanego programu cieniującego i macierzy transformacji.
@@ -58,6 +68,14 @@ public:
      * @param sy Współczynnik skalowania w osi Y.
      */
     virtual void scale(float sx, float sy) override = 0;
+
+    /**
+     * @brief Obraca ścianę wokół własnej osi.
+     *
+     * @param angle Kąt obrotu w stopniach.
+     * @param axis Wektor osi obrotu.
+     */
+    virtual void rotateAround(float angle, const glm::vec3& axis) = 0;
 };
 
 #endif // SHAPEOBJECT_H

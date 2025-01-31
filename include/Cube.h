@@ -5,15 +5,17 @@
 #include <array>
 #include "ShapeObject.h"
 
+#include <iostream>
+
 /**
  * @class Cube
  * @brief Klasa reprezentująca sześcian jako obiekt 3D.
  *
- * Klasa Cube dziedziczy po DrawableObject i TransformableObject, dzięki czemu
+ * Klasa Cube dziedziczy po ShapeObject, dzięki czemu
  * obsługuje zarówno renderowanie, jak i transformacje w przestrzeni 3D.
  * Pozwala na manipulację położeniem, rotacją, skalowaniem oraz przypisywanie tekstur do ścian.
  */
-class Cube : public DrawableObject, public TransformableObject {
+class Cube : public ShapeObject {
 public:
     /**
      * @brief Identyfikator VAO (Vertex Array Object) OpenGL.
@@ -37,9 +39,9 @@ public:
      * @param x Współrzędna X środka sześcianu.
      * @param y Współrzędna Y środka sześcianu.
      * @param z Współrzędna Z środka sześcianu.
-     * @param color Tablica zawierająca wartości RGB koloru.
+     * @param texture Identyfikator tekstury OpenGL przypisanej do każdej z 6 ścian.
      */
-    Cube(float size, float x, float y, float z, const float* color);
+    Cube(float size, float x, float y, float z, GLuint texture);
 
     /**
      * @brief Konfiguruje bufory wierzchołków i indeksów dla OpenGL.
@@ -92,6 +94,14 @@ public:
     void scale(float sx, float sy) override;
 
     /**
+     * @brief Obraca ścianę wokół własnej osi.
+     *
+     * @param angle Kąt obrotu w stopniach.
+     * @param axis Wektor osi obrotu.
+     */
+    void rotateAround(float angle, const glm::vec3& axis);
+
+    /**
      * @brief Ustawia teksturę dla jednej ze ścian sześcianu.
      *
      * @param side Indeks ściany (0-5), gdzie 0 = przód, 1 = tył, 2 = lewa, 3 = prawa, 4 = góra, 5 = dół.
@@ -114,11 +124,6 @@ private:
      * @brief Wektor przechowujący indeksy wierzchołków do renderowania za pomocą EBO.
      */
     std::vector<unsigned int> indices;
-
-    /**
-     * @brief Wektor przechowujący wartości kolorów dla każdego wierzchołka.
-     */
-    std::vector<float> colors;
 
     /**
      * @brief Tablica przechowująca identyfikatory tekstur dla każdej ściany sześcianu.

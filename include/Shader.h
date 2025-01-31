@@ -3,12 +3,15 @@
 
 #include <GL/glew.h>
 #include <string>
+#include <fstream>
+#include <sstream>
+#include <iostream>
 
 /**
  * @class Shader
  * @brief Klasa obsługująca programy cieniujące w OpenGL.
  *
- * Klasa `Shader` umożliwia ładowanie, kompilację i używanie programów cieniujących
+ * Klasa Shader umożliwia ładowanie, kompilację i używanie programów cieniujących
  * w OpenGL. Obsługuje zarówno podstawowy zestaw (vertex + fragment shader), jak
  * i opcjonalny geometry shader.
  */

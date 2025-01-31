@@ -1,5 +1,4 @@
 #include "Wall.h"
-#include <iostream>
 
 Wall::Wall(float width, float height, float x, float y, float z, GLuint texture) {
     vertices = {

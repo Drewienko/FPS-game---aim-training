@@ -1,8 +1,7 @@
 #include "Cube.h"
-#include <iostream>
 
 
-Cube::Cube(float size, float x, float y, float z, const float* color) {
+Cube::Cube(float size, float x, float y, float z, GLuint texture) {
     vertices = {
         x - size, y - size, z + size,   0.0f, 0.0f,   0.0f,  0.0f,  1.0f,
         x + size, y - size, z + size,   1.0f, 0.0f,   0.0f,  0.0f,  1.0f,
@@ -51,7 +50,7 @@ Cube::Cube(float size, float x, float y, float z, const float* color) {
     };
 
     for (int i = 0; i < 6; ++i) {
-        textures[i] = 0;
+        textures[i] = texture;
     }
 
     setupBuffers();
@@ -180,5 +179,17 @@ void Cube::scale(float sx, float sy) {
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(float), vertices.data());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void Cube::rotateAround(float angle, const glm::vec3& axis) {
+    glm::vec3 center(0.0f, 0.0f, 0.0f);
+    for (size_t i = 0; i < vertices.size(); i += 8) {
+        center.x += vertices[i];
+        center.y += vertices[i + 1];
+        center.z += vertices[i + 2];
+    }
+    center /= static_cast<float>(vertices.size() / 8);
+
+    rotatePoint(angle, axis, center);
 }
 

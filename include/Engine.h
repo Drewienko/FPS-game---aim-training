@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <GL/glew.h>
-#include "Shader.h"
 #include <GL/freeglut.h>
 
 #include <glm/glm.hpp>
@@ -11,9 +10,13 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
 
+
+#include "Shader.h"
+
 #include "Observer.h"
 #include "Cube.h"
-#include "BitMapHandler.h"
+#include "BitmapHandler.h"
+#include "Wall.h"
 
 /**
  * @struct Light
