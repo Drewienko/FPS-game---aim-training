@@ -17,7 +17,7 @@
 #include "Cube.h"
 #include "BitmapHandler.h"
 #include "Wall.h"
-
+#include "ModelObject.h"
 /**
  * @struct Light
  * @brief Struktura reprezentująca źródło światła w scenie.

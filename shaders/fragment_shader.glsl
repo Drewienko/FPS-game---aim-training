@@ -53,7 +53,7 @@ uniform sampler2D texture1;
 /**
  * @brief Siła wpływu cienia na oświetlenie (wartość domyślna 1.5).
  */
-uniform float shadowStrength = 1.5;
+uniform float shadowStrength = 1.0;
 
 /**
  * @brief Tryb debugowania (0 = wyłączony, wartości >0 wskazują konkretne źródło światła).

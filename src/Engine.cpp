@@ -13,6 +13,7 @@ static int debugmode;
 Observer* observer = nullptr;
 std::vector<Cube*> cubes;
 std::vector<Wall*> walls;
+std::vector<ModelObject*> drawableObjects;
 Shader* mainShader;
 Shader* depthShader;
 std::vector<Light> lights;
@@ -146,6 +147,11 @@ void Engine::displayCallback() {
             cube->draw(depthShader->getProgramID(), model, glm::mat4(1.0f), glm::mat4(1.0f));
         }
 
+        for (ModelObject* model : drawableObjects) {
+            glm::mat4 modelMatrix = model->getModelMatrix();
+            model->draw(depthShader->getProgramID(), modelMatrix, glm::mat4(1.0f), glm::mat4(1.0f));
+        }
+
         
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
@@ -186,6 +192,12 @@ void Engine::displayCallback() {
     for (Cube* cube : cubes) {
         cube->draw(mainShader->getProgramID(), glm::mat4(1.0f), view, projection);
     }
+    for (ModelObject* model : drawableObjects) {
+            glm::mat4 modelMatrix = model->getModelMatrix();
+            model->draw(mainShader->getProgramID(), modelMatrix, view, projection);
+           // std::cout << "Drawing model" << std::endl;
+    }
+    
 
     for (size_t i = 0; i < lights.size(); i++) {
         glm::mat4 model = glm::mat4(1.0f);
@@ -309,6 +321,29 @@ void Engine::start() {
 
 void Engine::setup()
 {
+    ModelObject* model = new ModelObject("models/P90.obj");
+    model->setPosition(glm::vec3(0.0f, 1.0f, -0.5f));
+    model->setScale(glm::vec3(0.5f));
+    model->rotate(90.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+    drawableObjects.push_back(model);
+
+    model = new ModelObject("models/AK-47.obj");
+    model->setPosition(glm::vec3(0.0f, 2.0f, -0.3f));
+    model->setScale(glm::vec3(0.5f));
+    model->rotate(-90.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+    drawableObjects.push_back(model);
+
+    model = new ModelObject("models/Pistol.obj");
+    model->setPosition(glm::vec3(0.0f, 3.0f, -0.5f));
+    model->setScale(glm::vec3(0.1f));
+    model->rotate(0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+    drawableObjects.push_back(model);
+
+    model = new ModelObject("models/SniperRifle.obj");
+    model->setPosition(glm::vec3(0.0f, 4.0f, -0.3f));
+    model->setScale(glm::vec3(0.5f));
+    model->rotate(90.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+    drawableObjects.push_back(model);
 
     float roomWidth = 15.0f;
     float roomHeight = 16.0f;

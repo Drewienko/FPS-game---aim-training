@@ -32,9 +32,16 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(stb)
 
+FetchContent_Declare(
+    assimp
+    GIT_REPOSITORY https://github.com/assimp/assimp.git
+    GIT_TAG        6a08c39e3a91ef385e76515cfad86aca4bfd57ff #refs/tags/v5.3.1
+)
+
+FetchContent_MakeAvailable(assimp)
 
 
-project ("Engine-3D")
+project ("FPS-Game")
 
 set(SOURCE_FILES
     main
@@ -44,6 +51,7 @@ set(SOURCE_FILES
     Observer
     Wall
     Shader
+    ModelObject
 )
 
 
@@ -59,7 +67,7 @@ endforeach()
 add_executable(${PROJECT_NAME} ${FULL_SOURCE_FILES})
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET Engine-3D PROPERTY CXX_STANDARD 20)
+  set_property(TARGET FPS-Game PROPERTY CXX_STANDARD 20)
 endif()
 
 INCLUDE_DIRECTORIES(
@@ -82,6 +90,7 @@ TARGET_LINK_LIBRARIES(
     ${PROJECT_NAME} PRIVATE
     freeglut
     glm::glm
+    assimp
     "${CMAKE_SOURCE_DIR}/lib/glew32.lib"
 )
 
@@ -100,6 +109,13 @@ add_custom_command(
     $<TARGET_FILE_DIR:${PROJECT_NAME}>/textures
 )
 
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/models
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>/models
+)
+
 
 
 add_custom_command(
@@ -114,4 +130,11 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy
     ${CMAKE_SOURCE_DIR}/lib/glew32.dll
     $<TARGET_FILE_DIR:${PROJECT_NAME}>/
+)
+
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+    ${assimp_BINARY_DIR}/bin/assimp-vc143-mtd.dll
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>
 )
