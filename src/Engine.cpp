@@ -17,7 +17,7 @@ std::vector<ModelObject*> drawableObjects;
 Shader* mainShader;
 Shader* depthShader;
 std::vector<Light> lights;
-
+HUDRenderer hud;
 GLuint wallTexture = 0;
 GLuint woodTexture = 0;
 Cube* lightCube = nullptr;
@@ -47,6 +47,7 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
 
     wallTexture = BitmapHandler::loadBitmapFromFile("textures/wall.jpg");
     woodTexture = BitmapHandler::loadBitmapFromFile("textures/wood.jpg");
+    hud.init();
 
     setup();
 
@@ -195,7 +196,7 @@ void Engine::displayCallback() {
     for (ModelObject* model : drawableObjects) {
             glm::mat4 modelMatrix = model->getModelMatrix();
             model->draw(mainShader->getProgramID(), modelMatrix, view, projection);
-           // std::cout << "Drawing model" << std::endl;
+            //std::cout << "Drawing model" << std::endl;
     }
     
 
@@ -205,6 +206,8 @@ void Engine::displayCallback() {
         glUniformMatrix4fv(glGetUniformLocation(mainShader->getProgramID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
         lightCube->draw(mainShader->getProgramID(), model, view, projection);
     }
+
+    hud.drawCrosshair();
 
     glutSwapBuffers();
 }
@@ -345,6 +348,14 @@ void Engine::setup()
     model->rotate(90.0f, glm::vec3(0.0f, 1.0f, 0.0f));
     drawableObjects.push_back(model);
 
+    TargetObject* target;
+    for (int i = 0; i < 5; i++) {
+        target = new TargetObject("models/target.obj");
+        target->setPosition(glm::vec3(1.0f*i, 0.0f, 2.0f));
+        drawableObjects.push_back(target);
+    }
+
+
     float roomWidth = 15.0f;
     float roomHeight = 16.0f;
     float roomDepth = 14.0f;
@@ -382,6 +393,26 @@ void Engine::keyboard(unsigned char key, int x, int y)
         cubes.push_back(cube);
         break;
     }
+    case 'g': {
+        glm::vec3 rayOrigin = observer->getPosition();
+        glm::vec3 rayDir = glm::normalize(observer->getTarget() - rayOrigin);
+
+        for (auto it = drawableObjects.begin(); it != drawableObjects.end(); ) {//bez it++
+            if (auto* target = dynamic_cast<TargetObject*>(*it)) {
+                if (target->isHitByRay(rayOrigin, rayDir)) {
+                    target->onHit();
+                    it = drawableObjects.erase(it);//zwraca iterator drawableObjects.end() albo nastepny iterator
+                    continue;
+                }
+            }
+            it++;
+        }
+        break;
+    }
+
+    case 'h':
+        hud.setShowCrosshair();
+        break;
 
     default:
         break;

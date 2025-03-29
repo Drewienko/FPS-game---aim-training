@@ -26,7 +26,7 @@ public:
     void scale(float sx, float sy) override;
     glm::mat4 getModelMatrix() const;
 
-private:
+protected:
     struct Vertex {
         glm::vec3 position;
         glm::vec3 normal;
@@ -38,13 +38,11 @@ private:
     glm::vec3 rotationAxis{ 0.0f, 1.0f, 0.0f };
     float rotationAngle{ 0.0f };
 
-    std::vector<Vertex> vertices;
-    std::vector<unsigned int> indices;
-
     struct Mesh {
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
-        GLuint VAO, VBO, EBO;
+        GLuint VAO=0, VBO=0, EBO=0;
+        GLuint textureID = 0;
     };
 
     std::vector<Mesh> meshes;

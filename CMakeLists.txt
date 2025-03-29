@@ -52,6 +52,8 @@ set(SOURCE_FILES
     Wall
     Shader
     ModelObject
+    TargetObject
+    HUDRenderer
 )
 
 

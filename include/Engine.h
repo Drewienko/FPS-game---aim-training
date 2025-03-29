@@ -18,6 +18,9 @@
 #include "BitmapHandler.h"
 #include "Wall.h"
 #include "ModelObject.h"
+#include "TargetObject.h"
+#include "HUDRenderer.h"
+
 /**
  * @struct Light
  * @brief Struktura reprezentująca źródło światła w scenie.
