@@ -70,6 +70,11 @@ public:
     static void setup();
 
     /**
+     * @brief Funkcja inicjalizująca OpenGL i ustawienia silnika.
+     */
+    static void setup2();
+
+    /**
      * @brief Obsługuje zdarzenia klawiatury.
      *
      * @param key Wciśnięty klawisz.

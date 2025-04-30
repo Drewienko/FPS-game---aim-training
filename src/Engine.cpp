@@ -43,13 +43,13 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
     std::cout << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
     initSettings();
 
-    observer = new Observer(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    observer = new Observer(glm::vec3(0.0f, 1.0f, -6.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
     wallTexture = BitmapHandler::loadBitmapFromFile("textures/wall.jpg");
     woodTexture = BitmapHandler::loadBitmapFromFile("textures/wood.jpg");
     hud.init();
 
-    setup();
+    setup2();
 
     
 
@@ -78,9 +78,9 @@ void Engine::initSettings() {
 void Engine::initializeLights() {
 
     glm::vec3 lightPositions[] = {
-    glm::vec3(-5.0f, -5.0f, 7.0f),
-    glm::vec3(5.0f, -5.0f, 7.0f),
-    glm::vec3(0.0f, 20.0f, 0.0f)
+    glm::vec3(-5.0f, 1.0f, -9.0f),
+    glm::vec3(5.0f, 2.0f, -8.0f),
+    glm::vec3(1.0f, 10.0f, 10.0f)
     };
 
     for (int i = 0; i < lightPositions->length(); i++) {
@@ -186,9 +186,12 @@ void Engine::displayCallback() {
         glBindTexture(GL_TEXTURE_2D, lights[i].shadowMap);
         glUniform1i(glGetUniformLocation(mainShader->getProgramID(), shadowMapUniform.c_str()),2+ i);
     }
+    glDisable(GL_CULL_FACE);
     for (Wall* wall : walls) {
         wall->draw(mainShader->getProgramID(), glm::mat4(1.0f), view, projection);
     }
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 
     for (Cube* cube : cubes) {
         cube->draw(mainShader->getProgramID(), glm::mat4(1.0f), view, projection);
@@ -282,8 +285,8 @@ void Engine::mouseMotionCallback(int x, int y) {
     float deltaX = static_cast<float>(x - lastMouseX);
     float deltaY = static_cast<float>(y - lastMouseY);
 
-    float newYaw = observer->getYaw() - deltaX * sensitivity;
-    float newPitch = observer->getPitch() + deltaY * sensitivity;
+    float newYaw = observer->getYaw() + deltaX * sensitivity;
+    float newPitch = observer->getPitch() - deltaY * sensitivity;
 
     observer->setYaw(newYaw);
     observer->setPitch(newPitch);
@@ -372,6 +375,58 @@ void Engine::setup()
     angledWall2->rotateAround(-30.0f, glm::vec3(0.0f, 1.0f, 0.0f));
     walls.push_back(angledWall2);
 }
+
+void Engine::setup2()
+{
+    float roomWidth = 15.0f;
+    float roomDepth = 30.0f;
+    float roomHeight = 5.0f;
+
+    Wall* floor = new Wall(roomWidth, roomDepth, -7.5f, -15.5f, 5.5f, woodTexture);
+    floor->rotateAround(-90.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+    walls.push_back(floor);
+
+    Wall* leftWall = new Wall(roomDepth, roomHeight, -roomWidth / 2.0f, 0.0f, 0.0f, wallTexture);
+    leftWall->rotateAround(90.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+    leftWall->translate(glm::vec3(-15.0f, -0.5f, 5.5f));
+    walls.push_back(leftWall);
+
+    Wall* rightWall = new Wall(roomDepth, roomHeight, roomWidth / 2.0f, 0.0f, 0.0f, wallTexture);
+    rightWall->rotateAround(-90.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+    rightWall->translate(glm::vec3(-15.0f, -0.5f, 5.5f));
+    walls.push_back(rightWall);
+
+    Wall* backWall = new Wall(roomWidth, roomHeight, 0.0f, 0.0f, roomDepth / 2.0f, wallTexture);
+    walls.push_back(backWall);
+    backWall->translate(glm::vec3(-7.5f, -0.5f, 5.5f));
+
+
+    for (int i = -2; i <= 2; ++i) {
+        ModelObject* table = new ModelObject("models/table.obj");
+        table->setPosition(glm::vec3(i * 2.5f, 0.0f, -1.5f));
+        table->setScale(glm::vec3(0.01f));
+        drawableObjects.push_back(table);
+    }
+
+    ModelObject* ak = new ModelObject("models/AK-47.obj");
+    ak->setPosition(glm::vec3(-6.0f, 1.0f, -1.0f));
+    ak->setScale(glm::vec3(0.5f));
+    ak->rotate(-90.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+    drawableObjects.push_back(ak);
+
+    ModelObject* sniper = new ModelObject("models/SniperRifle.obj");
+    sniper->setPosition(glm::vec3(-6.0f, 2.0f, -1.0f));
+    sniper->setScale(glm::vec3(0.5f));
+    sniper->rotate(90.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+    drawableObjects.push_back(sniper);
+
+    for (int i = 0; i < 5; ++i) {
+        TargetObject* target = new TargetObject("models/target.obj");
+        target->setPosition(glm::vec3(i * 2.5f - 5.0f, 0.0f, 20.0f));
+        drawableObjects.push_back(target);
+    }
+}
+
 
 void Engine::keyboard(unsigned char key, int x, int y)
 {
