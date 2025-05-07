@@ -23,6 +23,11 @@ FetchContent_Declare(
 	GIT_TAG 	566cd459201ae29003ef5686c06506d8646e55c6 #refs/tags/v3.6.0
 )
 
+set(FREEGLUT_BUILD_DEMOS OFF CACHE BOOL "" FORCE)
+set(FREEGLUT_BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
+set(FREEGLUT_BUILD_STATIC_LIBS OFF CACHE BOOL "" FORCE)
+set(FREEGLUT_PRINT_WARNINGS OFF CACHE BOOL "" FORCE)
+
 FetchContent_MakeAvailable(freeglut)
 
 FetchContent_Declare(
@@ -37,6 +42,11 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/assimp/assimp.git
     GIT_TAG        6a08c39e3a91ef385e76515cfad86aca4bfd57ff #refs/tags/v5.3.1
 )
+
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INJECT_DEBUG_POSTFIX OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(assimp)
 
@@ -81,7 +91,8 @@ INCLUDE_DIRECTORIES(
 link_directories("${CMAKE_SOURCE_DIR}/lib")
 
 set(SHADERS
-
+    ${CMAKE_SOURCE_DIR}/shaders/vertex_hud_shader.glsl
+    ${CMAKE_SOURCE_DIR}/shaders/fragment_hud_shader.glsl
     ${CMAKE_SOURCE_DIR}/shaders/vertex_shader.glsl
     ${CMAKE_SOURCE_DIR}/shaders/fragment_shader.glsl
     ${CMAKE_SOURCE_DIR}/shaders/depth_fragment_shader.glsl
