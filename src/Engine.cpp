@@ -48,7 +48,7 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
     std::cout << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
     initSettings();
 
-    observer = new Observer(glm::vec3(0.0f, 20.0f, -6.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    observer = new Observer(glm::vec3(0.0f, 1.0f, -6.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
     wallTexture = BitmapHandler::loadBitmapFromFile("textures/wall.jpg");
     woodTexture = BitmapHandler::loadBitmapFromFile("textures/wood.jpg");
@@ -285,6 +285,7 @@ void Engine::keyboardCallback(unsigned char key, int x, int y) {
             it++;
         }
         break;
+    case '`': observer->setPosition(glm::vec3(0.0f, 3.0f, 0.0f)); break;
     case 'i': currentWeapon->translate(glm::vec3(0.0f, 0.01f, 0.0f)); break; // up
     case 'k': currentWeapon->translate(glm::vec3(0.0f, -0.01f, 0.0f)); break; // down
     case 'j': currentWeapon->translate(glm::vec3(-0.01f, 0.0f, 0.0f)); break; // left

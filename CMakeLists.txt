@@ -149,6 +149,6 @@ add_custom_command(
 add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
-    ${assimp_BINARY_DIR}/bin/assimp-vc143-mt.dll
+    ${assimp_BINARY_DIR}/bin/assimp-vc143-mtd.dll
     $<TARGET_FILE_DIR:${PROJECT_NAME}>
 )

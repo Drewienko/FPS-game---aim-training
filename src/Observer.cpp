@@ -136,13 +136,12 @@ void Observer::applyMovementInput(const std::set<char>& keys, float deltaTime, c
 
 
 void Observer::updatePhysics(float deltaTime, const std::vector<Wall*>& world) {
-    float heightOffset = 1.8f; // adjust this to match your model's actual height
+    float heightOffset = 1.8f; 
     velocity.y -= 9.81f * deltaTime;
     glm::vec3 nextPos = position + velocity * deltaTime;
 
     onGround = false;
 
-    // Ray from feet
     glm::vec3 rayOrigin = position - glm::vec3(0.0f, heightOffset, 0.0f);
     glm::vec3 rayDir = glm::vec3(0.0f, -1.0f, 0.0f);
     float maxDist = 0.25f;
@@ -157,7 +156,6 @@ void Observer::updatePhysics(float deltaTime, const std::vector<Wall*>& world) {
             onGround = true;
             velocity.y = 0.0f;
 
-            // Snap FEET to floor
             float feetY = max.y + 0.01f;
             position.y = feetY + heightOffset;
 
