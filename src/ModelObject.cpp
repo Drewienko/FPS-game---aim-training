@@ -20,13 +20,13 @@ void ModelObject::loadModel(const std::string& path) {
     }
 
     for (unsigned int i = 0; i < scene->mNumMeshes; ++i) {
-        Mesh mesh = processMesh(scene->mMeshes[i]);
+        Mesh mesh = processMesh(scene->mMeshes[i], scene);
         setupMesh(mesh);
         meshes.push_back(mesh);
     }
 }
 
-ModelObject::Mesh ModelObject::processMesh(aiMesh* mesh) {
+ModelObject::Mesh ModelObject::processMesh(aiMesh* mesh, const aiScene* scene) {
     Mesh out;
 
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
@@ -49,6 +49,20 @@ ModelObject::Mesh ModelObject::processMesh(aiMesh* mesh) {
         aiFace face = mesh->mFaces[i];
         for (unsigned int j = 0; j < face.mNumIndices; j++) {
             out.indices.push_back(face.mIndices[j]);
+        }
+    }
+
+    if (scene && scene->HasMaterials()) {
+        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+        if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
+            aiString str;
+            material->GetTexture(aiTextureType_DIFFUSE, 0, &str);
+
+            std::string path = "models/";  // Adjust if your .obj lives elsewhere
+            path += std::string(str.C_Str());
+
+            out.textureID = BitmapHandler::loadBitmapFromFile(path);
+            std::cout << "Loaded texture: " << path << std::endl;
         }
     }
 
@@ -97,6 +111,12 @@ void ModelObject::draw(GLuint shaderProgram,
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
     for (const Mesh& mesh : meshes) {
+        if (mesh.textureID != 0) {
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, mesh.textureID);
+            glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0);
+        }
+
         glBindVertexArray(mesh.VAO);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.indices.size()), GL_UNSIGNED_INT, 0);
     }

@@ -3,6 +3,7 @@
 
 #include "DrawableObject.h"
 #include "TransformableObject.h"
+#include "BitMapHandler.h"
 #include <string>
 #include <vector>
 #include <GL/glew.h>
@@ -48,7 +49,7 @@ protected:
     std::vector<Mesh> meshes;
 
     void loadModel(const std::string& path);
-    Mesh processMesh(aiMesh* mesh);
+    Mesh processMesh(aiMesh* mesh, const aiScene* scene);
     void setupMesh(Mesh& mesh);
 };
 

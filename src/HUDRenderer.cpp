@@ -15,7 +15,7 @@ HUDRenderer::~HUDRenderer() {
 
 void HUDRenderer::init() {
     hudShader = new Shader("shaders/vertex_hud_shader.glsl", "shaders/fragment_hud_shader.glsl");
-    loadCrosshairTexture("textures/crosshair.png");
+    //loadCrosshairTexture("textures/crosshair.png");
     setupQuad();
 }
 
@@ -34,17 +34,30 @@ void HUDRenderer::setShowCrosshair() {
     this->showCrosshair = !this->showCrosshair;
 }
 
-void HUDRenderer::setupQuad() {
-    float size = 0.05f;
-    float quadVertices[] = {
-        // positions   // texCoords
-        -size,  size, 0.0f, 1.0f,
-        -size, -size, 0.0f, 0.0f,
-         size, -size, 1.0f, 0.0f,
+void HUDRenderer::increaseSize() {
+    crosshairSize += 1.0f;
+    setupQuad();
+}
 
-        -size,  size, 0.0f, 1.0f,
-         size, -size, 1.0f, 0.0f,
-         size,  size, 1.0f, 1.0f
+void HUDRenderer::decreaseSize() {
+    crosshairSize -= 1.0f;
+    setupQuad();
+}
+
+void HUDRenderer::setColor(const glm::vec3& color) {
+    crosshairColor = color;
+}
+
+void HUDRenderer::setupQuad() {
+    float quadVertices[] = {
+        // positions     // texCoords
+        -1.0f,  1.0f,     0.0f, 1.0f,
+        -1.0f, -1.0f,     0.0f, 0.0f,
+         1.0f, -1.0f,     1.0f, 0.0f,
+
+        -1.0f,  1.0f,     0.0f, 1.0f,
+         1.0f, -1.0f,     1.0f, 0.0f,
+         1.0f,  1.0f,     1.0f, 1.0f
     };
 
     glGenVertexArrays(1, &quadVAO);
@@ -63,18 +76,28 @@ void HUDRenderer::setupQuad() {
     glBindVertexArray(0);
 }
 
-void HUDRenderer::drawCrosshair() {
-    if (!showCrosshair || !crosshairTexture || !hudShader) return;
 
+void HUDRenderer::drawCrosshair(int windowWidth, int windowHeight) {
+    if (!showCrosshair || !hudShader) return;
+
+    // Ensure HUD is rendered over everything
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     hudShader->use();
     glBindVertexArray(quadVAO);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, crosshairTexture);
-    glUniform1i(glGetUniformLocation(hudShader->getProgramID(), "hudTexture"), 0);
+
+    glUniform3fv(glGetUniformLocation(hudShader->getProgramID(), "crosshairColor"), 1, glm::value_ptr(crosshairColor));
+    float lineWidth = 1.5f;
+    float gapSize = 4.0f;
+
+    glUniform1f(glGetUniformLocation(hudShader->getProgramID(), "lineWidth"), lineWidth);
+    glUniform1f(glGetUniformLocation(hudShader->getProgramID(), "gapSize"), gapSize);
+    glUniform1f(glGetUniformLocation(hudShader->getProgramID(), "crosshairLength"), crosshairSize);
+    glUniform2f(glGetUniformLocation(hudShader->getProgramID(), "resolution"),
+        static_cast<float>(windowWidth),
+        static_cast<float>(windowHeight));
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -82,3 +105,4 @@ void HUDRenderer::drawCrosshair() {
     glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
 }
+

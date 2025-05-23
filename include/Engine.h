@@ -20,6 +20,7 @@
 #include "ModelObject.h"
 #include "TargetObject.h"
 #include "HUDRenderer.h"
+#include "HeldWeapon.h"
 
 /**
  * @struct Light

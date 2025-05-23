@@ -43,7 +43,7 @@ FetchContent_Declare(
     GIT_TAG        6a08c39e3a91ef385e76515cfad86aca4bfd57ff #refs/tags/v5.3.1
 )
 
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_INJECT_DEBUG_POSTFIX OFF CACHE BOOL "" FORCE)
 set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
@@ -64,6 +64,7 @@ set(SOURCE_FILES
     ModelObject
     TargetObject
     HUDRenderer
+    HeldWeapon
 )
 
 
@@ -148,6 +149,6 @@ add_custom_command(
 add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
-    ${assimp_BINARY_DIR}/bin/assimp-vc143-mtd.dll
+    ${assimp_BINARY_DIR}/bin/assimp-vc143-mt.dll
     $<TARGET_FILE_DIR:${PROJECT_NAME}>
 )

@@ -21,6 +21,7 @@ HUDRenderer hud;
 GLuint wallTexture = 0;
 GLuint woodTexture = 0;
 Cube* lightCube = nullptr;
+HeldWeapon* currentWeapon = nullptr;
 
 Engine::Engine(int argc, char** argv, int width, int height, const char* title) {
     glutInit(&argc, argv);
@@ -210,7 +211,16 @@ void Engine::displayCallback() {
         lightCube->draw(mainShader->getProgramID(), model, view, projection);
     }
 
-    hud.drawCrosshair();
+    if (currentWeapon) {
+        glm::mat4 model = currentWeapon->getModelMatrix();
+        glm::mat4 weaponView = glm::mat4(1.0f); // broñ zawsze patrzy wprost
+        glm::mat4 weaponProjection = glm::perspective(glm::radians(60.0f),
+            (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
+
+        currentWeapon->draw(mainShader->getProgramID(), model, weaponView, weaponProjection);
+    }
+
+    hud.drawCrosshair(windowWidth, windowHeight);
 
     glutSwapBuffers();
 }
@@ -253,6 +263,11 @@ void Engine::keyboardCallback(unsigned char key, int x, int y) {
         break;
     case 27: // ESC
         exit(0);
+        break;
+    case 'm': // symulacja strza³u
+        if (currentWeapon) {
+            currentWeapon->triggerRecoil();
+        }
         break;
     default:
         break;
@@ -306,6 +321,9 @@ void Engine::reshapeCallback(int w, int h) {
 void Engine::timerCallback(int value) {
     
     glutPostRedisplay();
+    if (currentWeapon) {
+        currentWeapon->update(1.0f / 60.0f); // sta³y deltaTime, albo licz rzeczywisty czas
+    }
     glutTimerFunc(1000 / 60, timerCallback, value); // 60 FPS
 }
 
@@ -421,21 +439,50 @@ void Engine::setup2()
     drawableObjects.push_back(sniper);
 
     for (int i = 0; i < 5; ++i) {
-        TargetObject* target = new TargetObject("models/target.obj");
+        TargetObject* target = new TargetObject("models/Human.obj");
         target->setPosition(glm::vec3(i * 2.5f - 5.0f, 0.0f, 20.0f));
+        target->rotate(180.0f, glm::vec3(0.0f, 1.0f, 0.0f));
         drawableObjects.push_back(target);
     }
+
+    currentWeapon = new HeldWeapon("models/P90.obj");
+    currentWeapon->setScale(glm::vec3(0.5f));
+    //currentWeapon->rotate(180.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+
 }
 
 
 void Engine::keyboard(unsigned char key, int x, int y)
 {
     switch (key) {
+    case 'i': currentWeapon->translate(glm::vec3(0.0f, 0.01f, 0.0f)); break; // up
+    case 'k': currentWeapon->translate(glm::vec3(0.0f, -0.01f, 0.0f)); break; // down
+    case 'j': currentWeapon->translate(glm::vec3(-0.01f, 0.0f, 0.0f)); break; // left
+    case 'l': currentWeapon->translate(glm::vec3(0.01f, 0.0f, 0.0f)); break; // right
+    case 'u': currentWeapon->translate(glm::vec3(0.0f, 0.0f, -0.01f)); break; // forward
+    case 'o': currentWeapon->translate(glm::vec3(0.0f, 0.0f, 0.01f)); break;  // back
     case 'f':
     case 'F':
         if (!cubes.empty()) {
             cubes.pop_back();
         }
+        break;
+
+    case '+':
+    case '=':
+        hud.increaseSize();
+        break;
+    case '-':
+        hud.decreaseSize();
+        break;
+    case 'r':
+        hud.setColor(glm::vec3(1.0f, 0.0f, 0.0f)); // czerwony
+        break;
+    case 'g':
+        hud.setColor(glm::vec3(0.0f, 1.0f, 0.0f)); // zielony
+        break;
+    case 'y':
+        hud.setColor(glm::vec3(0.0f, 0.5f, 1.0f)); // niebieski
         break;
 
     case 'b': {
@@ -448,7 +495,7 @@ void Engine::keyboard(unsigned char key, int x, int y)
         cubes.push_back(cube);
         break;
     }
-    case 'g': {
+    case 'v': {
         glm::vec3 rayOrigin = observer->getPosition();
         glm::vec3 rayDir = glm::normalize(observer->getTarget() - rayOrigin);
 
