@@ -103,6 +103,10 @@ public:
      */
     void rotateAround(float angle, const glm::vec3& axis);
 
+    glm::vec3 getMinBounds() const;
+    glm::vec3 getMaxBounds() const;
+
+
 private:
     /**
      * @brief Wektor przechowujący współrzędne wierzchołków ściany.

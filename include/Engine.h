@@ -9,7 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
-
+#include <set>
 
 #include "Shader.h"
 
@@ -162,6 +162,8 @@ private:
      * @brief Aktualizuje macierz projekcji po zmianie trybu widoku.
      */
     static void updateProjectionMatrix();
+
+    static void keyboardUpCallback(unsigned char key, int x, int y);
 };
 
 #endif // ENGINE_H

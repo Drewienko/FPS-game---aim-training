@@ -1,10 +1,13 @@
 ﻿#ifndef OBSERVER_H
 #define OBSERVER_H
 
+#include "TransformableObject.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include "TransformableObject.h"
-
+#include "TargetObject.h"
+#include <vector>
+#include <set>
+#include "Wall.h"
 /**
  * @class Observer
  * @brief Klasa reprezentująca obserwatora (kamerę) w przestrzeni 3D.
@@ -136,6 +139,18 @@ public:
      * kątów pitch i yaw, umożliwiając płynne obracanie kamery.
      */
     void updateTarget();
+
+    glm::vec3 velocity = glm::vec3(0.0f);
+    float speed = 5.0f;
+    bool onGround = false;
+
+    void applyMovementInput(const std::set<char>& keys, float deltaTime, const std::vector<Wall*>& world);
+    void updatePhysics(float deltaTime, const std::vector<Wall*>& world);
+    bool rayIntersectsAABB(const glm::vec3& origin,
+        const glm::vec3& dir,
+        const glm::vec3& aabbMin,
+        const glm::vec3& aabbMax,
+        float& t);
 
 private:
     /**

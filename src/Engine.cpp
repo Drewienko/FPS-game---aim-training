@@ -23,6 +23,10 @@ GLuint woodTexture = 0;
 Cube* lightCube = nullptr;
 HeldWeapon* currentWeapon = nullptr;
 
+
+std::set<char> currentlyHeldKeys;
+float lastFrameTime = 0.0f;
+
 Engine::Engine(int argc, char** argv, int width, int height, const char* title) {
     glutInit(&argc, argv);
     glutInitContextVersion(4, 3);
@@ -44,7 +48,7 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
     std::cout << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
     initSettings();
 
-    observer = new Observer(glm::vec3(0.0f, 1.0f, -6.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    observer = new Observer(glm::vec3(0.0f, 20.0f, -6.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
     wallTexture = BitmapHandler::loadBitmapFromFile("textures/wall.jpg");
     woodTexture = BitmapHandler::loadBitmapFromFile("textures/wood.jpg");
@@ -56,6 +60,7 @@ Engine::Engine(int argc, char** argv, int width, int height, const char* title) 
 
     glutDisplayFunc(displayCallback);
     glutKeyboardFunc(keyboardCallback);
+    glutKeyboardUpFunc(keyboardUpCallback);
     glutReshapeFunc(reshapeCallback);
     glutMouseFunc(mouseCallback);
     glutMotionFunc(mouseMotionCallback);
@@ -225,23 +230,20 @@ void Engine::displayCallback() {
     glutSwapBuffers();
 }
 
-
+void Engine::keyboardUpCallback(unsigned char key, int x, int y) {
+    currentlyHeldKeys.erase(key);
+}
 
 
 void Engine::keyboardCallback(unsigned char key, int x, int y) {
     float speed = 0.5f; 
     switch (key) {
+    case ' ':
     case 'w':
-        observer->moveForward(speed);
-        break;
     case 's':
-        observer->moveForward(-speed);
-        break;
     case 'a':
-        observer->moveRight(-speed);
-        break;
     case 'd':
-        observer->moveRight(speed);
+        currentlyHeldKeys.insert(key);
         break;
     case 'q':
         observer->translate(glm::vec3(0.0f, speed, 0.0f));
@@ -262,18 +264,80 @@ void Engine::keyboardCallback(unsigned char key, int x, int y) {
         debugmode = 3;
         break;
     case 27: // ESC
+
         exit(0);
         break;
     case 'm': // symulacja strza³u
         if (currentWeapon) {
             currentWeapon->triggerRecoil();
         }
+        glm::vec3 rayOrigin = observer->getPosition();
+        glm::vec3 rayDir = glm::normalize(observer->getTarget() - rayOrigin);
+
+        for (auto it = drawableObjects.begin(); it != drawableObjects.end(); ) {//bez it++
+            if (auto* target = dynamic_cast<TargetObject*>(*it)) {
+                if (target->isHitByRay(rayOrigin, rayDir)) {
+                    target->onHit();
+                    it = drawableObjects.erase(it);//zwraca iterator drawableObjects.end() albo nastepny iterator
+                    continue;
+                }
+            }
+            it++;
+        }
         break;
+    case 'i': currentWeapon->translate(glm::vec3(0.0f, 0.01f, 0.0f)); break; // up
+    case 'k': currentWeapon->translate(glm::vec3(0.0f, -0.01f, 0.0f)); break; // down
+    case 'j': currentWeapon->translate(glm::vec3(-0.01f, 0.0f, 0.0f)); break; // left
+    case 'l': currentWeapon->translate(glm::vec3(0.01f, 0.0f, 0.0f)); break; // right
+    case 'u': currentWeapon->translate(glm::vec3(0.0f, 0.0f, -0.01f)); break; // forward
+    case 'o': currentWeapon->translate(glm::vec3(0.0f, 0.0f, 0.01f)); break;  // back
+    case 'f':
+    case 'F':
+        if (!cubes.empty()) {
+            cubes.pop_back();
+        }
+        break;
+
+    case '+':
+    case '=':
+        hud.increaseSize();
+        break;
+    case '-':
+        hud.decreaseSize();
+        break;
+    case 'r':
+        hud.setColor(glm::vec3(1.0f, 0.0f, 0.0f)); // czerwony
+        break;
+    case 'g':
+        hud.setColor(glm::vec3(0.0f, 1.0f, 0.0f)); // zielony
+        break;
+    case 'y':
+        hud.setColor(glm::vec3(0.0f, 0.5f, 1.0f)); // niebieski
+        break;
+
+    case 'b': {
+        glm::vec3 point = observer->getPosition();
+        Cube* cube = new Cube(1.0, point.x, point.y, point.z, woodTexture);
+        glm::vec3 direction = 3.0f * glm::normalize(observer->getTarget() - point);
+
+        cube->translate(direction);
+
+        cubes.push_back(cube);
+        break;
+    }
+    case 'p': 
+        glutSetCursor(GLUT_CURSOR_NONE);
+        break;
+    case '[': 
+        glutSetCursor(GLUT_CURSOR_INHERIT);  
+        break;
+    case 'h':
+        hud.setShowCrosshair();
+        break;
+
     default:
         break;
     }
-
-    keyboard(key, x, y);
     glutPostRedisplay();
 }
 
@@ -319,11 +383,16 @@ void Engine::reshapeCallback(int w, int h) {
 }
 
 void Engine::timerCallback(int value) {
-    
+    float currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+    float deltaTime = currentTime - lastFrameTime;
+    lastFrameTime = currentTime;
+
+    observer->applyMovementInput(currentlyHeldKeys, deltaTime, walls);
+    observer->updatePhysics(deltaTime, walls);
+
+    currentWeapon->update(deltaTime);
+
     glutPostRedisplay();
-    if (currentWeapon) {
-        currentWeapon->update(1.0f / 60.0f); // sta³y deltaTime, albo licz rzeczywisty czas
-    }
     glutTimerFunc(1000 / 60, timerCallback, value); // 60 FPS
 }
 
@@ -455,66 +524,7 @@ void Engine::setup2()
 void Engine::keyboard(unsigned char key, int x, int y)
 {
     switch (key) {
-    case 'i': currentWeapon->translate(glm::vec3(0.0f, 0.01f, 0.0f)); break; // up
-    case 'k': currentWeapon->translate(glm::vec3(0.0f, -0.01f, 0.0f)); break; // down
-    case 'j': currentWeapon->translate(glm::vec3(-0.01f, 0.0f, 0.0f)); break; // left
-    case 'l': currentWeapon->translate(glm::vec3(0.01f, 0.0f, 0.0f)); break; // right
-    case 'u': currentWeapon->translate(glm::vec3(0.0f, 0.0f, -0.01f)); break; // forward
-    case 'o': currentWeapon->translate(glm::vec3(0.0f, 0.0f, 0.01f)); break;  // back
-    case 'f':
-    case 'F':
-        if (!cubes.empty()) {
-            cubes.pop_back();
-        }
-        break;
-
-    case '+':
-    case '=':
-        hud.increaseSize();
-        break;
-    case '-':
-        hud.decreaseSize();
-        break;
-    case 'r':
-        hud.setColor(glm::vec3(1.0f, 0.0f, 0.0f)); // czerwony
-        break;
-    case 'g':
-        hud.setColor(glm::vec3(0.0f, 1.0f, 0.0f)); // zielony
-        break;
-    case 'y':
-        hud.setColor(glm::vec3(0.0f, 0.5f, 1.0f)); // niebieski
-        break;
-
-    case 'b': {
-        glm::vec3 point = observer->getPosition();
-        Cube* cube = new Cube(1.0, point.x, point.y, point.z, woodTexture);
-        glm::vec3 direction = 3.0f * glm::normalize(observer->getTarget() - point);
-
-        cube->translate(direction);
-
-        cubes.push_back(cube);
-        break;
-    }
-    case 'v': {
-        glm::vec3 rayOrigin = observer->getPosition();
-        glm::vec3 rayDir = glm::normalize(observer->getTarget() - rayOrigin);
-
-        for (auto it = drawableObjects.begin(); it != drawableObjects.end(); ) {//bez it++
-            if (auto* target = dynamic_cast<TargetObject*>(*it)) {
-                if (target->isHitByRay(rayOrigin, rayDir)) {
-                    target->onHit();
-                    it = drawableObjects.erase(it);//zwraca iterator drawableObjects.end() albo nastepny iterator
-                    continue;
-                }
-            }
-            it++;
-        }
-        break;
-    }
-
-    case 'h':
-        hud.setShowCrosshair();
-        break;
+    
 
     default:
         break;

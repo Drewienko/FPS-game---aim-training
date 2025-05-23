@@ -142,3 +142,24 @@ void Wall::rotateAround(float angle, const glm::vec3& axis) {
 
     rotatePoint(angle,axis,center);
 }
+
+glm::vec3 Wall::getMinBounds() const {
+    glm::vec3 min(FLT_MAX);
+    for (size_t i = 0; i < vertices.size(); i += 8) {
+        min.x = std::min(min.x, vertices[i]);
+        min.y = std::min(min.y, vertices[i + 1]);
+        min.z = std::min(min.z, vertices[i + 2]);
+    }
+    return min;
+}
+
+glm::vec3 Wall::getMaxBounds() const {
+    glm::vec3 max(-FLT_MAX);
+    for (size_t i = 0; i < vertices.size(); i += 8) {
+        max.x = std::max(max.x, vertices[i]);
+        max.y = std::max(max.y, vertices[i + 1]);
+        max.z = std::max(max.z, vertices[i + 2]);
+    }
+    return max;
+}
+

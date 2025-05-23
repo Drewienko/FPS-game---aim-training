@@ -11,10 +11,10 @@ public:
     bool isHitByRay(const glm::vec3& rayOrigin, const glm::vec3& rayDir) const;
     void onHit();
 
-private:
+
     glm::vec3 bboxMin;
     glm::vec3 bboxMax;
-
+private:
     void calculateBoundingBox();
 };
 
