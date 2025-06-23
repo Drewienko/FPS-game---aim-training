@@ -511,6 +511,8 @@ void Engine::setup2()
     for (int i = 0; i < 5; ++i) {
         TargetObject* target = new TargetObject("models/Human.obj");
         target->setPosition(glm::vec3(i * 2.5f - 5.0f, 0.0f, 20.0f));
+
+        target->setScale(glm::vec3(0.5f));
         target->rotate(180.0f, glm::vec3(0.0f, 1.0f, 0.0f));
         drawableObjects.push_back(target);
     }
