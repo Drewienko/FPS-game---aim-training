@@ -58,7 +58,7 @@ ModelObject::Mesh ModelObject::processMesh(aiMesh* mesh, const aiScene* scene) {
             aiString str;
             material->GetTexture(aiTextureType_DIFFUSE, 0, &str);
 
-            std::string path = "models/";  // Adjust if your .obj lives elsewhere
+            std::string path = "models/";
             path += std::string(str.C_Str());
 
             out.textureID = BitmapHandler::loadBitmapFromFile(path);

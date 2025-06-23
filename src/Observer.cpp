@@ -185,7 +185,6 @@ bool Observer::rayIntersectsAABB(const glm::vec3& origin,
 
     for (int i = 0; i < 3; ++i) {
         if (std::abs(dir[i]) < 1e-6f) {
-            // Ray is parallel to slab. No hit if origin not within the slab
             if (origin[i] < aabbMin[i] || origin[i] > aabbMax[i])
                 return false;
         }
