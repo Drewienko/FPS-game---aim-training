@@ -27,8 +27,10 @@ void TargetObject::calculateBoundingBox() {
 }
 
 bool TargetObject::isHitByRay(const glm::vec3& rayOrigin, const glm::vec3& rayDir) const {
-    glm::vec3 min = glm::vec3(getModelMatrix() * glm::vec4(bboxMin, 1.0f));
-    glm::vec3 max = glm::vec3(getModelMatrix() * glm::vec4(bboxMax, 1.0f));
+    glm::vec3 a = glm::vec3(getModelMatrix() * glm::vec4(bboxMin, 1.0f));
+    glm::vec3 b = glm::vec3(getModelMatrix() * glm::vec4(bboxMax, 1.0f));
+    glm::vec3 min = glm::min(a, b);
+    glm::vec3 max = glm::max(a, b);
 
     float tmin = 0.0f, tmax = 1000.0f;
 
@@ -44,6 +46,7 @@ bool TargetObject::isHitByRay(const glm::vec3& rayOrigin, const glm::vec3& rayDi
 
     return true;
 }
+
 
 void TargetObject::onHit() {
     std::cout << "Target hit!" << std::endl;

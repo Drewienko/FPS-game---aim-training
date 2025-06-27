@@ -14,7 +14,6 @@ public:
 
     glm::vec3 bboxMin;
     glm::vec3 bboxMax;
-private:
     void calculateBoundingBox();
 };
 
